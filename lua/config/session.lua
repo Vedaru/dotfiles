@@ -29,9 +29,10 @@ end
 function M.file_for(dir, opts)
   opts = opts or {}
   local name = M.encode(dir)
-  if opts.branch ~= false then
-    local br = vim.fn.systemlist("git branch --show-current", dir)[1] or ""
-    if br ~= "" and br ~= "main" and br ~= "master" then
+  if opts.branch == true then
+    local out = vim.fn.systemlist({ "git", "-C", dir, "branch", "--show-current" })
+    local br = (out[1] or ""):gsub("%s+", "")
+    if br ~= "" and br ~= "main" and br ~= "master" and vim.v.shell_error == 0 then
       name = name .. "%%" .. br:gsub("[/\\]+", "%%")
     end
   end
@@ -207,6 +208,53 @@ function M.save(opts)
   end
 
   fire("SavePre")
+
+  -- Clear every window's arglist (both the global one and any per-window
+  -- local ones created via :arglocal). This workflow never relies on the
+  -- arglist for anything -- it exists here only because Neovim's own
+  -- `nvim <file>` startup handling populates it automatically, before any
+  -- Lua config runs, regardless of whether we open the file with :drop,
+  -- :edit, or :buffer afterwards.
+  --
+  -- A stale arglist entry is what resurrects "deleted" buffers: :mksession
+  -- re-emits each entry as `$argadd <path>` (note the leading "$" -- a
+  -- plain `^argadd` pattern match will NOT catch this), and sourcing
+  -- `$argadd` both re-adds the arg *and* re-creates/re-lists a buffer for
+  -- it on restore, even if that buffer was properly wiped beforehand.
+  -- Clearing the arglist up front avoids needing to parse/patch the
+  -- generated session file at all.
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      vim.api.nvim_win_call(win, function()
+        local argc = vim.fn.argc()
+        if argc > 0 then
+          pcall(vim.cmd, string.format("silent! 1,%dargdelete", argc))
+        end
+      end)
+    end
+  end
+
+  -- Wipe zombie file buffers: plugins like Snacks.bufdelete typically only
+  -- *unlist* + unload a buffer (":bdelete" semantics) rather than truly
+  -- wiping it (":bwipeout"). A merely-unlisted-but-still-existing buffer
+  -- still matches bufnr(), and because 'sessionoptions' includes "buffers"
+  -- it still gets written into the session by :mksession, coming back
+  -- listed on restore. Force a real wipe so nothing references it.
+  --
+  -- Scoped to buftype == "" (normal file buffers) so this never touches
+  -- terminals, quickfix, help, or plugin UI buffers that are intentionally
+  -- unlisted -- wiping those would kill running processes / close panels.
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if
+      vim.api.nvim_buf_is_valid(buf)
+      and not vim.bo[buf].buflisted
+      and vim.bo[buf].buftype == ""
+      and vim.api.nvim_buf_get_name(buf) ~= ""
+    then
+      pcall(vim.cmd, "bwipeout! " .. buf)
+    end
+  end
+
   vim.cmd("mks! " .. vim.fn.fnameescape(file))
 
   -- Append active-buffer marker so restore_layout can focus it.
@@ -218,6 +266,7 @@ function M.save(opts)
       f:close()
     end
   end
+
   fire("SavePost")
 end
 
@@ -323,6 +372,13 @@ function M.switch(file, opts)
   M.close_floating_wins()
   vim.cmd("silent! tabonly")
   vim.cmd("silent! only")
+
+  -- Switch to a scratch buffer so the wipe+reload happens off-screen
+  vim.cmd("enew!")
+  vim.bo.buftype = "nofile"
+  vim.bo.buflisted = false
+  vim.bo.bufhidden = "wipe"
+
   vim.cmd("silent! %bdelete!")
   vim.g.session_active_buffer = nil
 
@@ -345,9 +401,6 @@ function M.load(opts)
     file = files[1]
   else
     file = M.file_for(M.project_root())
-    if vim.fn.filereadable(file) == 0 then
-      file = M.file_for(M.project_root(), { branch = false })
-    end
   end
   if not file or vim.fn.filereadable(file) == 0 then
     vim.notify("No session for this directory", vim.log.levels.WARN)

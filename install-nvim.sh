@@ -32,11 +32,14 @@ declare -A PLUGINS=(
   ["nvim-cmp"]="https://github.com/hrsh7th/nvim-cmp.git"
   ["cmp-buffer"]="https://github.com/hrsh7th/cmp-buffer.git"
   ["cmp-path"]="https://github.com/hrsh7th/cmp-path.git"
+  ["nvim-lspconfig"]="https://github.com/neovim/nvim-lspconfig.git"
+  ["mason.nvim"]="https://github.com/mason-org/mason.nvim.git"
+  ["mason-lspconfig.nvim"]="https://github.com/mason-org/mason-lspconfig.nvim.git"
   ["git-conflict.nvim"]="https://github.com/akinsho/git-conflict.nvim.git"
   ["gitsigns.nvim"]="https://github.com/lewis6991/gitsigns.nvim.git"
   ["grug-far.nvim"]="https://github.com/MagicDuck/grug-far.nvim.git"
-  ["mini.icons"]="https://github.com/echasnovski/mini.icons.git"
-  ["mini.statusline"]="https://github.com/echasnovski/mini.statusline.git"
+  ["mini.icons"]="https://github.com/nvim-mini/mini.icons.git"
+  ["mini.statusline"]="https://github.com/nvim-mini/mini.statusline.git"
   ["leap.nvim"]="https://codeberg.org/andyg/leap.nvim"
 )
 

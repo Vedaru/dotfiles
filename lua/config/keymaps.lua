@@ -132,10 +132,14 @@ end
 -- Terminal: <C-/> toggles at cwd, <C-\><C-n> to escape
 local S = require("config.session")
 map("n", "<leader>ft", function()
-  local ok, err = pcall(Snacks.terminal.toggle, nil, { cwd = S.project_root(), interactive = false })
-  if not ok then
-    vim.notify("Terminal: " .. tostring(err), vim.log.levels.ERROR)
+  -- Close existing snacks terminal if open, otherwise create one
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.b[vim.api.nvim_win_get_buf(win)].snacks_terminal then
+      vim.api.nvim_win_close(win, true)
+      return
+    end
   end
+  Snacks.terminal.toggle(nil, { cwd = S.project_root(), interactive = false })
 end, { desc = "Terminal (Root Dir)" })
 map("n", "<leader>fT", function()
   vim.cmd.lcd(S.project_root())

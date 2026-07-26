@@ -120,6 +120,10 @@ return {
         end
       end
 
+      -- If current window has winfixbuf (e.g. git blame), close it first
+      if vim.wo.winfixbuf then
+        vim.cmd("close")
+      end
       require("oil").open(dir)
     end, { desc = "Oil (cycle: file dir → root → /)" })
   end,

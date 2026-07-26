@@ -30,28 +30,45 @@ return {
   },
 
   config = function()
-    -- Auto-save on first BufWritePre per project (debounced by existence check).
-    local saved = {}
-    vim.api.nvim_create_autocmd("BufWritePre", {
-      group = vim.api.nvim_create_augroup("session_auto_save", { clear = true }),
-      callback = function()
-        local dir = S.project_root()
-        local file = S.file_for(dir)
-        if vim.fn.filereadable(file) == 0 and not saved[dir] then
-          saved[dir] = true
-          S.save({ cwd = dir })
-        end
-      end,
-    })
+    vim.schedule(function()
+      local args, root
 
-    -- Auto-restore session when nvim is opened with no args.
-    if vim.fn.argc() == 0 then
-      vim.schedule(function()
-        local file = S.file_for(S.project_root())
-        if vim.fn.filereadable(file) == 1 then
-          S.load()
+      if vim.fn.argc() == 0 then
+        root = S.project_root()
+      else
+        local first = vim.fn.argv(0)
+        if first == "" then return end
+        root = vim.fs.root(vim.fn.fnamemodify(first, ":p"), ".git")
+        if not root then return end
+        -- Capture absolute paths now; session switch changes cwd.
+        args = {}
+        for i = 0, vim.fn.argc() - 1 do
+          args[i + 1] = vim.fn.fnamemodify(vim.fn.argv(i), ":p")
         end
-      end)
-    end
+      end
+
+      local sess = S.file_for(root)
+      if vim.fn.filereadable(sess) ~= 1 then return end
+
+      if args then
+        S.switch(sess, { force = true })
+        -- Open the target file(s) without polluting the arglist (:drop does).
+        for _, path in ipairs(args) do
+          local bufnr = vim.fn.bufnr(path)
+          if bufnr > 0 and vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buflisted then
+            local wins = vim.fn.win_findbuf(bufnr)
+            if #wins > 0 then
+              vim.api.nvim_set_current_win(wins[1])
+            else
+              vim.cmd("buffer " .. bufnr)
+            end
+          else
+            vim.cmd("edit " .. vim.fn.fnameescape(path))
+          end
+        end
+      else
+        S.load()
+      end
+    end)
   end,
 }

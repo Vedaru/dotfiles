@@ -12,7 +12,7 @@ return {
       hl.Normal = { bg = "NONE" }
       hl.NormalNC = { bg = "NONE" }
       hl.NormalFloat = { bg = "NONE" }
-      hl.FloatBorder = { bg = "NONE" }
+      hl.FloatBorder = { fg = "#c2a86b", bg = "NONE" }
       hl.LineNr = { bg = "NONE" }
       hl.SignColumn = { bg = "NONE" }
       hl.FoldColumn = { bg = "NONE" }

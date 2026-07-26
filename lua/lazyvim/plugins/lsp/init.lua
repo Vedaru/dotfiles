@@ -24,6 +24,9 @@ return {
             -- prefix = "icons",
           },
           severity_sort = true,
+          float = {
+            border = "rounded",
+          },
           signs = {
             text = {
               [vim.diagnostic.severity.ERROR] = LazyVim.config.icons.diagnostics.Error,
@@ -242,6 +245,10 @@ return {
         end
       end
       vim.diagnostic.config(vim.deepcopy(opts.diagnostics))
+
+      -- Floating window borders for LSP hover / signature help
+      vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded" })
+      vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded" })
 
       if opts.capabilities then
         LazyVim.deprecate("lsp-config.opts.capabilities", "Use lsp-config.opts.servers['*'].capabilities instead")

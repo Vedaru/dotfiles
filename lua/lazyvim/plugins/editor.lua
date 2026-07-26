@@ -33,6 +33,9 @@ return {
     "lewis6991/gitsigns.nvim",
     event = "LazyFile",
     opts = {
+      preview_config = {
+        border = "rounded",
+      },
       signs = {
         add = { text = "▎" },
         change = { text = "▎" },

@@ -29,14 +29,8 @@ vim.api.nvim_create_autocmd("BufReadPre", {
       vim.b[event.buf].large_file = true
       vim.opt_local.foldmethod = "manual"
       vim.opt_local.spell = false
-      -- 大文件禁用 treesitter 高亮和 LSP
+      -- 大文件禁用 treesitter 高亮
       vim.b[event.buf].ts_highlight = false
-      vim.defer_fn(function()
-        local clients = vim.lsp.get_clients({ bufnr = event.buf })
-        for _, client in ipairs(clients) do
-          client:stop(true)
-        end
-      end, 10)
     end
   end,
 })
@@ -74,20 +68,6 @@ vim.api.nvim_create_autocmd("SessionLoadPost", {
   end,
 })
 
--- mini.files / oil.nvim: detach LSP from file-browser buffers
--- to prevent "mingled text" warnings and treesitter errors
-vim.api.nvim_create_autocmd("FileType", {
-  group = augroup("lsp_detach"),
-  pattern = { "minifiles", "oil" },
-  callback = function(event)
-    vim.schedule(function()
-      local clients = vim.lsp.get_clients({ bufnr = event.buf })
-      for _, client in ipairs(clients) do
-        client:stop(true)
-      end
-    end)
-  end,
-})
 
 -- snacks_dashboard 光标吸附修复已下沉到 snacks 源码
 -- (lua/snacks/dashboard.lua 的 D:init WinEnter autocmd)：

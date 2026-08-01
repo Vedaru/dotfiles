@@ -80,18 +80,19 @@ vim.g.clipboard = {
 -- 默认 yank/delete/paste 使用系统剪贴板（"+ 寄存器）
 vim.o.clipboard = "unnamedplus"
 
--- ── gx / vim.ui.open：WSL 下用 Windows 默认程序打开 ──────────────────────
--- 默认走 xdg-open，WSL 里不可用，会导致 gx 报错：
---   vim.ui.open: command failed (2): { "xdg-open", ... }
--- Neovim 0.10+ 的 gx handler 会对返回值调用 :wait()，所以必须用
--- vim.system 返回 SystemObj（vim.fn.jobstart 返回数字会触发
--- "attempt to index a number value"）
+-- ── gx / vim.ui.open：使用系统默认程序打开 URL/文件 ─────────────────
+-- 按优先级尝试：wslview (WSL) > xdg-open (Linux) > open (macOS)
 vim.ui.open = function(uri)
   local cmd
   if vim.fn.executable("wslview") == 1 then
     cmd = { "wslview", uri }
+  elseif vim.fn.executable("xdg-open") == 1 then
+    cmd = { "xdg-open", uri }
+  elseif vim.fn.executable("open") == 1 then
+    cmd = { "open", uri }
   else
-    cmd = { "powershell.exe", "-NoProfile", "-Command", "Start-Process", uri }
+    vim.notify("gx: no URL opener found (tried wslview, xdg-open, open)", vim.log.levels.ERROR)
+    return nil
   end
   return vim.system(cmd, { text = true })
 end
@@ -107,3 +108,7 @@ vim.opt.sessionoptions:remove("localoptions")
 -- followscs: respects ignorecase + smartcase for tag matching
 -- prevents "Session" from matching "session" (smartcase kicks in for uppercase)
 vim.opt.tagcase = "followscs"
+
+-- ── ArkTS (.ets) filetype → TypeScript treesitter highlighting ─────
+vim.filetype.add({ extension = { ets = "ets" } })
+vim.treesitter.language.register("typescript", "ets")

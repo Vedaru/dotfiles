@@ -82,6 +82,53 @@ patch_snacks() {
   fi
 }
 
+patch_git_conflict() {
+  local f="$LAZY_DIR/git-conflict.nvim/lua/git-conflict.lua"
+  [[ -f "$f" ]] || return 0
+
+  # Already patched? (idempotent)
+  if grep -q 'if position.marks then' "$f"; then
+    echo "  [skip] git-conflict already patched"
+    return 0
+  fi
+
+  # Block 1: visual-mode choose path (8-space indent)
+  sed -i '
+    /^        api.nvim_buf_set_lines(0, pos_start, pos_end, false, lines)$/{
+      a\        if position.marks then
+      n
+      s/^/  /
+      n
+      s/^/  /
+      n
+      s/^/  /
+      n
+      s/^/  /
+      n
+      s/^/  /
+      a\        end
+    }' "$f"
+
+  # Block 2: normal-mode choose path (2-space indent)
+  sed -i '
+    /^  api.nvim_buf_set_lines(0, pos_start, pos_end, false, lines)$/{
+      a\  if position.marks then
+      n
+      s/^/  /
+      n
+      s/^/  /
+      n
+      s/^/  /
+      n
+      s/^/  /
+      n
+      s/^/  /
+      a\  end
+    }' "$f"
+
+  echo "  [patch] git-conflict nil-guard on position.marks"
+}
+
 # ── main ──────────────────────────────────────────────────────────
 main() {
   local mode="${1:-}"
@@ -105,6 +152,7 @@ main() {
   done
 
   patch_snacks
+  patch_git_conflict
 
   echo ""
   echo "── Treesitter parsers ───────────────────────────────"

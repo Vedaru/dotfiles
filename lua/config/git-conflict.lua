@@ -161,11 +161,11 @@ local function refresh_plugin_ui()
   if not ok then
     return
   end
-  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(bufnr) then
-      pcall(gc.refresh, bufnr)
-    end
-  end
+  -- Process each loaded buffer to re-highlight conflicts.
+  -- The plugin's processing is triggered by the decoration provider
+  -- during redraw; triggering a redraw here ensures buffers are refreshed.
+  vim.cmd("silent! GitConflictRefresh")
+  vim.cmd("redraw")
 end
 
 function M.refresh(force_open)

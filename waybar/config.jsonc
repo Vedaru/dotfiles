@@ -1,0 +1,223 @@
+// =====================================================================
+// Waybar layout adapted from HANCORE-linux/waybar-themes (config/V1.2)
+// https://github.com/HANCORE-linux/waybar-themes
+// That repo's configs are Omarchy-based; per its own README they are
+// "usable on any distro by simply removing the Omarchy modules and
+// defining colors" -- which is exactly what's been done here: the
+// Omarchy-only modules (omarchy-menu, pacman updates, voxtype, its
+// idle/notification-silencing scripts) were swapped out for your real
+// launcher, power menu, tray and notification setup, and the pill
+// layout + CSS mechanics were kept as-is. Pure JSONC/CSS, so it isn't
+// tied to any Hyprland version -- confirmed fine against 0.56.
+// =====================================================================
+{
+  "layer": "overlay",
+  "position": "top",
+  "exclusive": true,
+  "reload_style_on_change": true,
+  "spacing": 0,
+  "height": 0,
+  "margin-top": 6,
+  "margin-left": 8,
+  "margin-right": 8,
+  "margin-bottom": 0,
+
+  "modules-left": ["group/left1", "group/left2", "group/left3"],
+  "modules-center": ["hyprland/workspaces"],
+  "modules-right": ["group/right1", "group/right2", "group/right3"],
+
+  "group/left1": {
+    "orientation": "inherit",
+    "modules": ["custom/apps", "hyprland/window"]
+  },
+  "group/left2": {
+    "orientation": "inherit",
+    "modules": ["idle_inhibitor", "custom/notifications"]
+  },
+  "group/left3": {
+    "orientation": "inherit",
+    "modules": ["custom/recording-stop"]
+  },
+
+  "hyprland/workspaces": {
+    "active-only": false,
+    "disable-scroll": true,
+    "all-outputs": true,
+    "format": "{id}",
+    "tooltip": false,
+    "persistent-workspaces": {
+      "*": 5
+    }
+  },
+
+  "hyprland/window": {
+    "format": "{title}",
+    "max-length": 40,
+    "separate-outputs": true
+  },
+
+  "custom/apps": {
+    "format": " \uf31b ",
+    "tooltip": false,
+    "on-click": "rofi -show drun -disable-history"
+  },
+
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+      "activated": "󰾪",
+      "deactivated": "󰾫"
+    }
+  },
+
+  "custom/notifications": {
+    "tooltip": true,
+    "format": " {icon} ",
+    "format-icons": {
+      "notification": "󰂚",
+      "none": "󰂛",
+      "dnd-notification": "󰂚",
+      "dnd-none": "󰂛",
+      "inhibited-notification": "󰂚",
+      "inhibited-none": "󰂛",
+      "dnd-inhibited-notification": "󰂚",
+      "dnd-inhibited-none": "󰂛"
+    },
+    "return-type": "json",
+    "exec": "~/.config/waybar/scripts/notification-state.sh",
+    "on-click": "makoctl dismiss -a 2>/dev/null",
+    "on-click-right": "makoctl mode -t do-not-disturb 2>/dev/null",
+    "escape": true,
+    "interval": 5
+  },
+
+  "custom/recording": {
+    "tooltip": false,
+    "format": "{text}",
+    "return-type": "json",
+    "exec": "~/.config/waybar/scripts/recording-state.sh",
+    "escape": true,
+    "interval": 2
+  },
+
+  "custom/recording-stop": {
+    "tooltip": false,
+    "format": "{text}",
+    "return-type": "json",
+    "exec": "~/.config/waybar/scripts/recording-stop-btn.sh",
+    "on-click": "~/.config/waybar/scripts/recording-stop.sh",
+    "escape": true,
+    "interval": 2
+  },
+
+  "group/right1": {
+    "orientation": "inherit",
+    "modules": [
+      "network",
+      "bluetooth",
+      "custom/backlight",
+      "pulseaudio",
+      "battery"
+    ]
+  },
+
+  "network": {
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "format": "{icon}",
+    "format-wifi": "{icon}",
+    "format-ethernet": "󰌗",
+    "format-disconnected": "󰤮",
+    "tooltip-format-wifi": "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
+    "tooltip-format-ethernet": "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
+    "tooltip-format-disconnected": "Disconnected",
+    "interval": 3,
+    "on-click": "ghostty -e /usr/bin/nmtui"
+  },
+
+  "bluetooth": {
+    "format": "󰂯",
+    "format-disabled": "󰂲",
+    "format-connected": "󰂱",
+    "tooltip-format": "Devices connected: {num_connections}",
+    "on-click": "ghostty -e /home/vedaru/.cargo/bin/bluetui"
+  },
+
+  "custom/backlight": {
+    "format": "{}",
+    "tooltip-format": "{}",
+    "exec": "~/.config/waybar/scripts/backlight.sh",
+    "on-scroll-up": "brightnessctl -d intel_backlight set +5%",
+    "on-scroll-down": "pct=$(brightnessctl -d intel_backlight -m | cut -d, -f4 | tr -d '%'); [ \"$pct\" -gt 5 ] && brightnessctl -d intel_backlight set 5%-",
+    "on-click": "brightnessctl -d intel_backlight set 50%",
+    "on-click-right": "brightnessctl -d intel_backlight set 100%",
+    "interval": 2,
+    "return-type": "json",
+    "min-length": 2
+  },
+
+  "pulseaudio": {
+    "format": "{volume}% {icon}",
+    "format-muted": "",
+    "format-icons": {
+      "default": ["", "", ""]
+    },
+    "tooltip": false,
+    "scroll-step": 1,
+    "on-click": "ghostty -e /usr/bin/pulsemixer",
+    "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+  },
+
+  "battery": {
+    "format": "{capacity}% {icon}",
+    "format-charging": "{capacity}% 󰂄",
+    "format-icons": {
+      "default": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+    },
+    "interval": 5,
+    "states": {
+      "warning": 20,
+      "critical": 10
+    },
+    "on-click": "~/.config/waybar/scripts/battery-manager.sh"
+  },
+
+  "group/right2": {
+    "orientation": "inherit",
+    "modules": ["custom/power-expand-icon"]
+  },
+
+  "custom/power-expand-icon": {
+    "format": "⏻",
+    "tooltip": false,
+    "on-click": "wlogout"
+  },
+
+  "group/right3": {
+    "orientation": "inherit",
+    "modules": ["group/tray-expander", "clock"]
+  },
+
+  "group/tray-expander": {
+    "orientation": "inherit",
+    "drawer": {
+      "transition-duration": 600,
+      "children-class": "tray-group-item"
+    },
+    "modules": ["custom/tray-expand-icon", "tray"]
+  },
+  "custom/tray-expand-icon": {
+    "format": "󰇙",
+    "tooltip": false
+  },
+  "tray": {
+    "icon-size": 16,
+    "spacing": 10
+  },
+
+  "clock": {
+    "format": "{:%H:%M}",
+    "format-alt": "{:%A, %d %B %Y}",
+    "tooltip-format": "<span>{calendar}</span>",
+    "interval": 1
+  }
+}

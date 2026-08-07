@@ -1,0 +1,136 @@
+-- Autocmds are automatically loaded on the VeryLazy event
+-- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
+-- 这里只放对 LazyVim 默认自动命令的补充
+
+local augroup = function(name)
+  return vim.api.nvim_create_augroup("user_" .. name, { clear = true })
+end
+
+-- 进入插入模式关闭当前行高亮，离开时恢复，减少视觉干扰
+vim.api.nvim_create_autocmd("InsertEnter", {
+  group = augroup("cursorline"),
+  callback = function()
+    vim.opt_local.cursorline = false
+  end,
+})
+vim.api.nvim_create_autocmd("InsertLeave", {
+  group = augroup("cursorline"),
+  callback = function()
+    vim.opt_local.cursorline = true
+  end,
+})
+
+-- 某些大文件关闭重型功能，保持流畅
+vim.api.nvim_create_autocmd("BufReadPre", {
+  group = augroup("bigfile"),
+  callback = function(event)
+    local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(event.buf))
+    if ok and stats and stats.size > 1024 * 1024 then -- > 1MB
+      vim.b[event.buf].large_file = true
+      vim.opt_local.foldmethod = "manual"
+      vim.opt_local.spell = false
+      -- 大文件禁用 treesitter 高亮
+      vim.b[event.buf].ts_highlight = false
+    end
+  end,
+})
+
+-- Makefile / Go 必须用 real tab，不用空格缩进
+vim.api.nvim_create_autocmd("FileType", {
+  group = augroup("real_tabs"),
+  pattern = { "make", "gomod", "go" },
+  callback = function()
+    vim.opt_local.expandtab = false
+  end,
+})
+
+-- Tmux: fix rendering glitches when other panes are killed/resized
+vim.api.nvim_create_autocmd("VimResized", {
+  group = augroup("tmux_resize"),
+  pattern = "*",
+  command = "redraw!",
+})
+
+-- Markdown: 默认完全展开，不按标题折叠，关闭拼写检查
+vim.api.nvim_create_autocmd("FileType", {
+  group = augroup("markdown_unfold"),
+  pattern = "markdown",
+  callback = function()
+    vim.opt_local.foldlevel = 99
+    vim.opt_local.spell = false
+  end,
+})
+
+vim.api.nvim_create_autocmd("SessionLoadPost", {
+  group = augroup("session_line_numbers"),
+  callback = function()
+    require("config.session").reset_line_numbers()
+  end,
+})
+
+
+-- snacks_dashboard 光标吸附修复已下沉到 snacks 源码
+-- (lua/snacks/dashboard.lua 的 D:init WinEnter autocmd)：
+-- 从 Lazy 等浮窗返回 dashboard 时直接 self:update() 重新吸附，
+-- 比在 config 里绕 Snacks.dashboard.update() 事件链更稳。
+-- build.sh 会把改过的 snacks.nvim 一起打包，重装不丢。
+--
+-- dashboard 的快捷选项删除 + q -> :qa 也都已下沉到 snacks 源码
+-- (defaults.sections 去掉 keys 段、preset.keys 清空、D:init q 改 :qa)，
+-- 这里不再需要任何 config 层 workaround。
+
+-- snacks picker 预览切到真实 buffer 后 Alt-w 会丢，用 buffer-local 补回 cycle_win
+local function snacks_picker_preview_cycle_win(buf)
+  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+    win = tonumber(win) --[[@as number?]]
+    if win and vim.api.nvim_win_is_valid(win) and vim.w[win].snacks_picker_preview then
+      vim.keymap.set({ "n", "i", "v" }, "<A-w>", function()
+        local pickers = Snacks and Snacks.picker and Snacks.picker.get({ tab = true })
+        local picker = pickers and pickers[1]
+        if picker then
+          require("snacks.picker.actions").cycle_win(picker)
+        end
+      end, { buffer = buf, nowait = true, silent = true, desc = "Picker: cycle window" })
+      return
+    end
+  end
+end
+
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  group = augroup("snacks_picker_preview"),
+  callback = function(ev)
+    vim.schedule(function()
+      snacks_picker_preview_cycle_win(ev.buf)
+    end)
+  end,
+})
+
+-- Terminal: disable line numbers / signcolumn, restore on non-terminal re-display.
+vim.api.nvim_create_autocmd({ "TermOpen", "BufWinEnter" }, {
+  group = augroup("terminal"),
+  callback = function(args)
+    if vim.bo[args.buf].buftype == "terminal" then
+      vim.b[args.buf].snacks_previewed = nil
+      for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
+        local o = { scope = "local", win = win }
+        vim.api.nvim_set_option_value("number", false, o)
+        vim.api.nvim_set_option_value("relativenumber", false, o)
+        vim.api.nvim_set_option_value("signcolumn", "no", o)
+      end
+    else
+      local win = vim.fn.bufwinid(args.buf)
+      if win ~= -1 and vim.api.nvim_win_is_valid(win) then
+        local o = { scope = "local", win = win }
+        if not vim.wo[win].number then
+          vim.api.nvim_set_option_value("number", true, o)
+        end
+        if not vim.wo[win].relativenumber then
+          vim.api.nvim_set_option_value("relativenumber", true, o)
+        end
+        if vim.wo[win].signcolumn == "no" then
+          vim.api.nvim_set_option_value("signcolumn", "yes", o)
+        end
+      end
+    end
+  end,
+})

@@ -1,0 +1,19 @@
+#!/bin/bash
+# Recording stop button — just a red dot, click to stop
+REC_FILE="/tmp/hyprland-screenrec-pid"
+
+recording=false
+if [ -f "$REC_FILE" ] && kill -0 "$(cat "$REC_FILE")" 2>/dev/null; then
+    recording=true
+elif [ -f "$REC_FILE" ]; then
+    rm -f "$REC_FILE"
+fi
+if [ "$recording" = false ] && pgrep -x wf-recorder > /dev/null 2>&1; then
+    recording=true
+fi
+
+if [ "$recording" = true ]; then
+    echo '{"text": "●", "class": "recording", "tooltip": "Click to stop recording"}'
+else
+    echo '{"text": "", "class": "idle", "tooltip": ""}'
+fi

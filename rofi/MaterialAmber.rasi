@@ -1,0 +1,216 @@
+/**
+ *
+ * MaterialAmber -- GNOME/libadwaita "tonal" companion theme
+ * Base template structure from Aditya Shakya (adi1090x) + SirEthanator,
+ * reworked into a single centered column (no side image, GNOME Shell
+ * overview style) with a Material-Design-3 tonal palette: every surface
+ * is the SAME hue, just different lightness steps, instead of separate
+ * background/accent colors -- that's what gives it the GNOME "tonal" feel.
+ * Matches the Hyprland/Waybar amber-brown theme.
+ *
+ * Rofi Version: 1.7.3
+ **/
+
+/*****----- Configuration -----*****/
+configuration {
+    modi:                       "drun,window";
+    show-icons:                 true;
+    icon-theme:                 "Adwaita";
+    display-drun:               "Apps";
+    display-window:             "Windows";
+    drun-display-format:        "{name}";
+    window-format:              "{w}  {c} — {t}";
+    sorting-method:             "fzf";
+    sort:                       true;
+}
+
+/*****----- Tonal palette (one hue, stepped lightness) -----*****/
+* {
+    font:                        "0xProto Nerd Font 10";
+
+    /* surfaces -- darkest to lightest, all the same warm-brown hue */
+    surface:                     #201709;
+    surface-container:           #2B2013;
+    surface-container-high:      #372B1B;
+    surface-container-highest:   #423522;
+
+    /* text on those surfaces */
+    on-surface:                  #F2E3C8;
+    on-surface-variant:          #C8B090;
+
+    /* accent -- primary tone + its container (soft) variant */
+    primary:                     #E0B25B;
+    on-primary:                  #3D2B0C;
+    primary-container:           #5C4321;
+    on-primary-container:        #F6DFB4;
+
+    urgent:                      #E0785B;
+    on-urgent:                   #2B1208;
+
+    /* legacy aliases so the shared element blocks below still resolve */
+    background:                  @surface;
+    background-alt:              @surface-container-high;
+    foreground:                  @on-surface;
+    selected:                    @primary-container;
+    active:                      @primary;
+}
+
+/*****----- Main Window -----*****/
+window {
+    transparency:                "real";
+    location:                    center;
+    anchor:                      center;
+    fullscreen:                  false;
+    width:                       640px;
+    x-offset:                    0px;
+    y-offset:                    -40px;
+
+    enabled:                     true;
+    border-radius:               24px;
+    cursor:                      "default";
+    background-color:            @surface;
+}
+
+/*****----- Main Box -----*****/
+mainbox {
+    enabled:                     true;
+    spacing:                     14px;
+    padding:                     20px;
+    background-color:            transparent;
+    orientation:                 vertical;
+    children:                    [ "inputbar", "message", "listview", "mode-switcher" ];
+}
+
+/*****----- Inputbar -----*****/
+inputbar {
+    enabled:                     true;
+    spacing:                     10px;
+    padding:                     16px 20px;
+    border-radius:               999px;
+    background-color:            @surface-container-high;
+    text-color:                  @on-surface;
+    children:                    [ "textbox-prompt-colon", "entry" ];
+}
+textbox-prompt-colon {
+    enabled:                     true;
+    expand:                      false;
+    str:                         "󰍉 ";
+    background-color:            inherit;
+    text-color:                  @primary;
+}
+entry {
+    enabled:                     true;
+    background-color:            inherit;
+    text-color:                  inherit;
+    cursor:                      text;
+    placeholder:                 "Type to search";
+    placeholder-color:           @on-surface-variant;
+}
+
+/*****----- Mode Switcher -----*****/
+mode-switcher{
+    enabled:                     true;
+    spacing:                     10px;
+    background-color:            transparent;
+    text-color:                  @on-surface;
+}
+button {
+    padding:                     10px;
+    border-radius:               999px;
+    background-color:            @surface-container-high;
+    text-color:                  @on-surface-variant;
+    cursor:                      pointer;
+}
+button selected {
+    background-color:            @primary;
+    text-color:                  @on-primary;
+}
+
+/*****----- Listview -----*****/
+listview {
+    enabled:                     true;
+    columns:                     1;
+    lines:                       8;
+    cycle:                       true;
+    dynamic:                     true;
+    scrollbar:                   false;
+    layout:                      vertical;
+    reverse:                     false;
+    fixed-height:                true;
+    fixed-columns:               true;
+
+    spacing:                     6px;
+    background-color:            transparent;
+    text-color:                  @on-surface;
+    cursor:                      "default";
+}
+
+/*****----- Elements -----*****/
+element {
+    enabled:                     true;
+    spacing:                     15px;
+    padding:                     10px 14px;
+    border-radius:               14px;
+    background-color:            transparent;
+    text-color:                  @on-surface;
+    cursor:                      pointer;
+}
+element normal.normal {
+    background-color:            inherit;
+    text-color:                  inherit;
+}
+element normal.urgent {
+    background-color:            transparent;
+    text-color:                  @urgent;
+}
+element normal.active {
+    background-color:            @surface-container-high;
+    text-color:                  @primary;
+}
+/* Selected row uses the soft "container" tone, not a loud flat accent --
+   this is the tonal-selection look GNOME/libadwaita uses instead of a
+   hard-contrast highlight bar. */
+element selected.normal {
+    background-color:            @primary-container;
+    text-color:                  @on-primary-container;
+}
+element selected.urgent {
+    background-color:            @urgent;
+    text-color:                  @on-urgent;
+}
+element selected.active {
+    background-color:            @primary-container;
+    text-color:                  @on-primary-container;
+}
+element-icon {
+    background-color:            transparent;
+    text-color:                  inherit;
+    size:                        28px;
+    cursor:                      inherit;
+}
+element-text {
+    background-color:            transparent;
+    text-color:                  inherit;
+    cursor:                      inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+}
+
+/*****----- Message -----*****/
+message {
+    background-color:            transparent;
+}
+textbox {
+    padding:                     14px 16px;
+    border-radius:               14px;
+    background-color:            @surface-container;
+    text-color:                  @on-surface-variant;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+}
+error-message {
+    padding:                     16px;
+    border-radius:               20px;
+    background-color:            @surface-container;
+    text-color:                  @on-surface;
+}

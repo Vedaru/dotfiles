@@ -1,0 +1,265 @@
+/* =====================================================================
+   Waybar -- GNOME/libadwaita "tonal" pass over the amber-brown theme.
+   Structure/mechanics still adapted from HANCORE-linux/waybar-themes
+   (config/V1.2): https://github.com/HANCORE-linux/waybar-themes
+
+   "Tonal" here means the same thing it means in GNOME 46+'s accent-color
+   system / Material Design 3: every surface is derived from ONE hue,
+   just stepped lighter or darker -- no separate accent gradients, no
+   outline borders for definition. Elevation/selection is communicated
+   purely by which lightness step a surface sits on. Matches the Rofi
+   MaterialAmber.rasi palette exactly.
+   ===================================================================== */
+
+@define-color surface                  #201709;
+@define-color surface-container        #2B2013;
+@define-color surface-container-high   #372B1B;
+@define-color surface-container-highest #423522;
+
+@define-color on-surface               #F2E3C8;
+@define-color on-surface-variant       #C8B090;
+
+@define-color primary                  #E0B25B;
+@define-color on-primary               #3D2B0C;
+
+@define-color primary-container        #5C4321;
+@define-color on-primary-container     #F6DFB4;
+
+@define-color urgent                   #E0785B;
+@define-color on-urgent                #2B1208;
+
+* {
+  border: none;
+  padding: 0px;
+  min-height: 0;
+  font-family: "JetBrainsMono Nerd Font";
+  transition: background-color .2s ease-out, color .2s ease-out;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+window#waybar {
+  background-color: transparent;
+}
+
+/* ---------- Tonal pill groups: fill only, no border, soft shadow for lift ---------- */
+
+#left1,
+#left2,
+.modules-center,
+#right1,
+#right2,
+#right3 {
+  border-radius: 16px;
+  background-color: @surface-container;
+}
+
+#left1  { margin: 0 4px 0 0; padding: 0 4px; }
+#left2  { margin: 0 4px 0 0; padding: 0 4px; }
+#left3  { margin: 0; padding: 0 4px; }
+#right1 { margin: 0 4px 0 0; padding: 0 6px; }
+#right2 { margin: 0 4px 0 0; padding: 0 9px 0 6px; }
+#right3 { margin: 0; padding: 0 0 0 4px; }
+
+/* ---------- Buttons / workspaces ---------- */
+
+button {
+  box-shadow: none;
+  border: none;
+  border-radius: 12px;
+}
+
+#workspaces {
+  padding: 0 4px;
+}
+
+#workspaces button {
+  padding: 0px 8px;
+  margin: 4px 2px;
+  color: @on-surface-variant;
+  font-weight: 600;
+  border-radius: 12px;
+  background-color: transparent;
+}
+
+/* Soft tonal chip for the active workspace -- not a loud gradient,
+   the same "container" tone Adwaita uses for a selected pill */
+#workspaces button.active,
+#workspaces button.focused {
+  background-color: @primary-container;
+  color: @on-primary-container;
+}
+
+#workspaces button:hover {
+  background-color: @surface-container-high;
+  color: @on-surface;
+}
+
+#workspaces button.urgent {
+  background-color: @urgent;
+  color: @on-urgent;
+}
+
+/* ---------- Generic module spacing / color ---------- */
+
+#custom-apps,
+#window,
+#idle_inhibitor,
+#custom-notifications,
+#network,
+#bluetooth,
+#custom-backlight,
+#pulseaudio,
+#battery,
+#custom-power-expand-icon,
+#custom-suspend,
+#custom-logout,
+#custom-reboot,
+#custom-shutdown,
+#custom-tray-expand-icon,
+#tray,
+#clock {
+  color: @on-surface;
+  padding: 0 7px;
+  margin: 0 2px;
+  border-radius: 12px;
+}
+
+/* Icon-only modules: give them consistent width so they align evenly
+   with text+icon modules like pulseaudio and battery */
+#network,
+#bluetooth,
+#custom-backlight {
+  min-width: 2em;
+}
+
+#pulseaudio,
+#battery {
+  min-width: 4.5em;
+}
+
+#custom-apps {
+  color: @primary;
+  font-size: 15px;
+  padding: 0 10px 0 5px;
+}
+
+#custom-apps:hover,
+#custom-notifications:hover {
+  background-color: @surface-container-high;
+}
+
+#window {
+  color: @on-surface-variant;
+  font-weight: 500;
+}
+
+#idle_inhibitor.activated {
+  color: @primary;
+}
+
+/* Recording pill — hidden when idle, red dot when active */
+#left3 {
+  border-radius: 16px;
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+#custom-recording-stop.idle {
+  color: transparent;
+  font-size: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  border: none;
+  background-color: transparent;
+}
+
+#custom-recording-stop.recording {
+  color: #fff;
+  background-color: #CC0000;
+  font-size: 10px;
+  padding: 4px 12px;
+  margin: 0;
+  border-radius: 16px;
+}
+
+#custom-notifications {
+  color: @primary;
+}
+
+#pulseaudio.muted,
+#network.disconnected,
+#bluetooth.disabled {
+  color: @on-surface-variant;
+}
+
+#battery.warning {
+  color: @primary;
+}
+
+#battery.critical:not(.charging) {
+  color: @urgent;
+  animation-name: blink-critical;
+  animation-duration: 1s;
+  animation-timing-function: steps(6);
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@keyframes blink-critical {
+  to { color: @on-surface; }
+}
+
+/* Power icon */
+#custom-shutdown {
+  color: @primary;
+  margin: 0 0;
+  border-radius: 10px;
+}
+
+#custom-shutdown:hover {
+  color: @on-primary;
+  background-color: @primary;
+  font-weight: 700;
+  margin: 0 0;
+  border-radius: 16px;
+}
+
+/* Tray group */
+#custom-tray-expand-icon {
+  color: @on-surface-variant;
+}
+
+#tray > .passive {
+  -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+  -gtk-icon-effect: highlight;
+  background-color: @urgent;
+  border-radius: 10px;
+}
+
+/* Clock is the one place a flat, fully-saturated primary tone is used --
+   a single strong accent, same idea as GNOME's clock/date pill */
+#clock {
+  color: @on-primary;
+  background-color: @primary;
+  font-weight: 700;
+  margin: 0 0;
+  border-radius: 16px;
+}
+
+/* ---------- Tooltips ---------- */
+tooltip {
+  padding: 6px 10px;
+  background: @surface-container-high;
+  border-radius: 12px;
+}
+
+tooltip label {
+  color: @on-surface;
+  font-weight: 500;
+}

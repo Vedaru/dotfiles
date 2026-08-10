@@ -32,8 +32,8 @@ hl.monitor({
 hl.on("hyprland.start", function()
     hl.exec_cmd("fcitx5 -d")
     hl.exec_cmd("waybar")
-    hl.exec_cmd("/usr/libexec/hyprpolkitagent")
     hl.exec_cmd("killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &")
+    hl.exec_cmd("xhost +si:localuser:root")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("cliphist wipe")
@@ -51,6 +51,7 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 -- hl.env("GTK_IM_MODULE", "fcitx")  -- Commented out: redundant on Wayland; fcitx5 uses native text-input protocol
 hl.env("QT_IM_MODULE", "fcitx")
+hl.env("QT_STYLE_OVERRIDE", "Breeze")  -- Qt6 dark theme for HyprCapture
 hl.env("XMODIFIERS", "@im=fcitx")
 hl.env("GLFW_IM_MODULE", "fcitx")
 hl.env("SDL_IM_MODULE", "fcitx")
@@ -292,10 +293,10 @@ hl.bind(mainMod .. " + SHIFT + E",    hl.dsp.exec_cmd("wofi-emoji"))
 hl.bind(mainMod .. " + SHIFT + C",    hl.dsp.exec_cmd("hyprpicker -a -n"))
 hl.bind(mainMod .. " + escape",       hl.dsp.exec_cmd("killall waybar; waybar & killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &"))
 
--- Screenshots & Screen Recording
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("~/Scripts/ScreenMenu"))
-hl.bind("ALT + Print",             hl.dsp.exec_cmd("~/Scripts/Screenshot --win"))
-hl.bind("Print",                   hl.dsp.exec_cmd("~/Scripts/Screenshot --now"))
+-- Screenshots & Screen Recording (HyprCapture)
+hl.bind(mainMod .. " + SHIFT + S", hl.plugin.hyprcapture.open)
+hl.bind(mainMod .. " + SHIFT + W", function() hl.plugin.hyprcapture.open("window") end)
+hl.bind(mainMod .. " + SHIFT + F", function() hl.plugin.hyprcapture.open("fullscreen") end)
 
 -- Volume controls
 hl.bind("XF86AudioRaiseVolume",         hl.dsp.exec_cmd("pamixer -i 2"), { locked = true, repeating = true })

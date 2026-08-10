@@ -1,15 +1,14 @@
 #!/bin/bash
-# Recording indicator for waybar (shows "  Recording" when active)
-REC_FILE="/tmp/hyprland-screenrec-pid"
+# Recording indicator for waybar (shows state text)
+SOCKET="${XDG_RUNTIME_DIR}/hyprcapture/recording.sock"
 
 recording=false
-if [ -f "$REC_FILE" ] && kill -0 "$(cat "$REC_FILE")" 2>/dev/null; then
-    recording=true
-elif [ -f "$REC_FILE" ]; then
-    rm -f "$REC_FILE"
-fi
-if [ "$recording" = false ] && pgrep -x wf-recorder > /dev/null 2>&1; then
-    recording=true
+if [ -S "$SOCKET" ]; then
+    state=$(socat -u UNIX-CONNECT:"$SOCKET" - 2>/dev/null)
+    phase=$(echo "$state" | grep -o '"phase":"[^"]*"' | cut -d'"' -f4)
+    if [ "$phase" = "recording" ] || [ "$phase" = "finalizing" ]; then
+        recording=true
+    fi
 fi
 
 if [ "$recording" = true ]; then

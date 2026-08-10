@@ -1,11 +1,3 @@
 #!/bin/bash
-# Stop wf-recorder when clicked from waybar
-REC_FILE="/tmp/hyprland-screenrec-pid"
-
-if [ -f "$REC_FILE" ] && kill -0 "$(cat "$REC_FILE")" 2>/dev/null; then
-    pid=$(cat "$REC_FILE")
-    kill "$pid" 2>/dev/null
-    wait "$pid" 2>/dev/null
-    rm -f "$REC_FILE"
-    notify-send -i video-x-generic "Recording saved" "$(ls -t ~/Pictures/Screenshots/Recording_*.mp4 2>/dev/null | head -1)"
-fi
+# Stop HyprCapture recording when clicked from waybar
+hyprctl eval "hl.plugin.hyprcapture.record_stop()" 2>/dev/null

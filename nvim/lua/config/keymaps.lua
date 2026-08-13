@@ -15,6 +15,9 @@ do
     { "v", "gra" }, { "x", "gra" },
     { "n", "<C-W>d" }, { "n", "<C-W><C-D>" },
     { "n", "[D" }, { "n", "]D" },
+    -- Core vim/_core/defaults.lua diagnostic jumps — exposed after removing
+    -- the user-level ]d/[d overrides; dormant without an LSP.
+    { "n", "]d" }, { "n", "[d" },
   }
   for _, spec in ipairs(builtins) do
     pcall(del, spec[1], spec[2])
@@ -98,25 +101,6 @@ map({ "n", "x" }, "n", "'Nn'[v:searchforward].'zv'", { expr = true, desc = "Next
 map({ "n", "x" }, "N", "'nN'[v:searchforward].'zv'", { expr = true, desc = "Prev Search Result" })
 map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
   { desc = "Redraw / Clear hlsearch / Diff Update" })
-
--- ── Diagnostics (vim.diagnostic — no LSP required) ───────────────────────────
-
-local function diag_jump(next, severity)
-  return function()
-    vim.diagnostic.jump({
-      count = (next and 1 or -1) * vim.v.count1,
-      severity = severity and vim.diagnostic.severity[severity] or nil,
-      float = true,
-    })
-  end
-end
-map("n", "<leader>cd", vim.diagnostic.open_float,      { desc = "Line Diagnostics" })
-map("n", "]d", diag_jump(true),                         { desc = "Next Diagnostic" })
-map("n", "[d", diag_jump(false),                        { desc = "Prev Diagnostic" })
-map("n", "]e", diag_jump(true, "ERROR"),                { desc = "Next Error" })
-map("n", "[e", diag_jump(false, "ERROR"),               { desc = "Prev Error" })
-map("n", "]w", diag_jump(true, "WARN"),                 { desc = "Next Warning" })
-map("n", "[w", diag_jump(false, "WARN"),                { desc = "Prev Warning" })
 
 -- ── Misc ─────────────────────────────────────────────────────────────────────
 

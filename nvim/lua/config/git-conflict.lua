@@ -156,20 +156,7 @@ end
 
 -- ── Refresh ──────────────────────────────────────────────────────────────────
 
-local function refresh_plugin_ui()
-  local ok, gc = pcall(require, "git-conflict")
-  if not ok then
-    return
-  end
-  -- Process each loaded buffer to re-highlight conflicts.
-  -- The plugin's processing is triggered by the decoration provider
-  -- during redraw; triggering a redraw here ensures buffers are refreshed.
-  vim.cmd("silent! GitConflictRefresh")
-  vim.cmd("redraw")
-end
-
 function M.refresh(force_open)
-  refresh_plugin_ui()
   local _, qf_items = M.build_conflict_list()
   M.update_qf(qf_items, force_open)
 end

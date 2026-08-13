@@ -3,6 +3,8 @@
 return {
   "folke/tokyonight.nvim",
   lazy = false,
+  -- Disabled while evaluating gruvbox (2026-08-13). Remove this line to restore tokyonight.
+  enabled = false,
   priority = 1000,
   opts = {
     style = "night",

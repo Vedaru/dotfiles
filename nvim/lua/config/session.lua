@@ -25,18 +25,9 @@ function M.decode(name)
   return path
 end
 
---- Session file path for a directory, optionally with git-branch suffix.
-function M.file_for(dir, opts)
-  opts = opts or {}
-  local name = M.encode(dir)
-  if opts.branch == true then
-    local out = vim.fn.systemlist({ "git", "-C", dir, "branch", "--show-current" })
-    local br = (out[1] or ""):gsub("%s+", "")
-    if br ~= "" and br ~= "main" and br ~= "master" and vim.v.shell_error == 0 then
-      name = name .. "%%" .. br:gsub("[/\\]+", "%%")
-    end
-  end
-  return M.session_dir() .. name .. ".vim"
+--- Session file path for a directory.
+function M.file_for(dir)
+  return M.session_dir() .. M.encode(dir) .. ".vim"
 end
 
 --- Git root of buffer > buffer dir > git root of cwd > cwd > $HOME.
@@ -180,12 +171,6 @@ function M.reset_line_numbers()
   end)
 end
 
--- ── Event helpers ────────────────────────────────────────────────────────────
-
-local function fire(event)
-  vim.api.nvim_exec_autocmds("User", { pattern = "Session" .. event, modeline = false })
-end
-
 -- ── Core session operations ──────────────────────────────────────────────────
 
 --- Save current session to disk.
@@ -206,8 +191,6 @@ function M.save(opts)
     vim.notify("Session not saved: no file buffers open", vim.log.levels.WARN)
     return
   end
-
-  fire("SavePre")
 
   -- Clear every window's arglist (both the global one and any per-window
   -- local ones created via :arglocal). This workflow never relies on the
@@ -267,7 +250,6 @@ function M.save(opts)
     end
   end
 
-  fire("SavePost")
 end
 
 --- Restore layout after a session has been sourced.
@@ -382,9 +364,7 @@ function M.switch(file, opts)
   vim.cmd("silent! %bdelete!")
   vim.g.session_active_buffer = nil
 
-  fire("LoadPre")
   local ok, err = pcall(vim.cmd, "source " .. vim.fn.fnameescape(file))
-  fire("LoadPost")
 
   if not ok then
     vim.notify("Session source failed: " .. tostring(err), vim.log.levels.ERROR)
@@ -407,34 +387,6 @@ function M.load(opts)
     return
   end
   M.switch(file)
-end
-
---- Interactive session picker via vim.ui.select.
-function M.select()
-  local seen, items = {}, {}
-  for _, file in ipairs(M.list()) do
-    if vim.uv.fs_stat(file) then
-      local dir = M.decode(file)
-      if not seen[dir] then
-        seen[dir] = true
-        items[#items + 1] = {
-          file = file,
-          dir = dir,
-          display = vim.fn.fnamemodify(dir, ":~"):gsub("\\", "/"),
-        }
-      end
-    end
-  end
-  vim.ui.select(items, {
-    prompt = "Select a session:",
-    format_item = function(item)
-      return item.display
-    end,
-  }, function(item)
-    if item then
-      M.switch(item.file)
-    end
-  end)
 end
 
 return M

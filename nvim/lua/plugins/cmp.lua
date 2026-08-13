@@ -1,17 +1,14 @@
 return {
   {
     "hrsh7th/nvim-cmp",
-    dir = vim.fn.stdpath("data") .. "/lazy/nvim-cmp",
     lazy = false,
     priority = 500,
     dependencies = {
       {
         "hrsh7th/cmp-buffer",
-        dir = vim.fn.stdpath("data") .. "/lazy/cmp-buffer",
       },
       {
         "hrsh7th/cmp-path",
-        dir = vim.fn.stdpath("data") .. "/lazy/cmp-path",
       },
     },
     config = function()

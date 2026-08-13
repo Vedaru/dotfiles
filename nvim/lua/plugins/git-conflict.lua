@@ -39,17 +39,6 @@ return {
     config = function(_, opts)
       require("git-conflict").setup(opts)
 
-      -- Safety net: guard nil position.marks in choose.
-      -- Root fix is in install-nvim.sh (patch_git_conflict).
-      local gc = require("git-conflict")
-      local _choose = gc.choose
-      gc.choose = function(side)
-        local ok, err = pcall(_choose, side)
-        if not ok then
-          vim.notify("git-conflict: " .. tostring(err), vim.log.levels.ERROR)
-        end
-      end
-
       vim.api.nvim_create_autocmd("User", {
         pattern = "GitConflictResolved",
         callback = function()

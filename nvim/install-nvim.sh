@@ -25,6 +25,7 @@ declare -A PLUGINS=(
   ["lazy.nvim"]="https://github.com/folke/lazy.nvim.git"
   ["LazyVim"]="https://github.com/LazyVim/LazyVim.git"
   ["tokyonight.nvim"]="https://github.com/folke/tokyonight.nvim.git"
+  ["gruvbox.nvim"]="https://github.com/ellisonleao/gruvbox.nvim.git"
   ["snacks.nvim"]="https://github.com/folke/snacks.nvim.git"
   ["oil.nvim"]="https://github.com/stevearc/oil.nvim.git"
   ["nvim-web-devicons"]="https://github.com/nvim-tree/nvim-web-devicons.git"
@@ -41,7 +42,7 @@ declare -A PLUGINS=(
 )
 
 # ── config files to install ───────────────────────────────────────
-CONFIG_FILES=("init.lua" "lazy-lock.json" "lazyvim.json" "lua")
+CONFIG_FILES=("init.lua" "lazyvim.json" "lua")
 
 # ── banner ────────────────────────────────────────────────────────
 banner() {

@@ -1,6 +1,6 @@
 # Dotfiles — Version Manifest
 
-Last updated: 2026-08-07
+Last updated: 2026-08-13
 
 ## System
 
@@ -23,6 +23,7 @@ Last updated: 2026-08-07
 | Component | Version |
 |-----------|---------|
 | Neovim | 0.12.4 |
+| Starship | 1.22.1 |
 
 ## Media
 

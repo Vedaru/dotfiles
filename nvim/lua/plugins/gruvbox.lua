@@ -12,6 +12,8 @@ return {
       WinSeparator = { fg = "#c2a86b", bold = true },
       VertSplit = { fg = "#c2a86b", bold = true },
       SnacksDashboardHeader = { fg = "#c2a86b", bold = true },
+      -- 保持透明光标行（与旧 tokyonight 一致），gruvbox 默认会加背景色
+      CursorLine = { bg = "NONE" },
     },
   },
   config = function(_, opts)

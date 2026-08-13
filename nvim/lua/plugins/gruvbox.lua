@@ -6,7 +6,8 @@ return {
   priority = 1000,
   opts = {
     contrast = "hard",
-    transparent_mode = true,
+    -- false: render gruvbox's own bg (#1d2021, dark0_hard), matching ghostty
+    transparent_mode = false,
     overrides = {
       FloatBorder = { fg = "#c2a86b" },
       WinSeparator = { fg = "#c2a86b", bold = true },

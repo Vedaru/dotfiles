@@ -16,7 +16,9 @@
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 hl.monitor({
-    output   = "eDP-2",
+    -- match by panel description so it works whether NVIDIA (eDP-2) or
+    -- Intel i915 (eDP-1) drives the panel (Secure Boot toggling switches GPU)
+    output   = "desc:Samsung Display Corp. ATNA60HU01-0",
     mode     = "preferred",
     position = "0x0",
     scale    = 1.33,
@@ -38,6 +40,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("cliphist wipe")
     hl.exec_cmd("hypridle")
+    hl.exec_cmd("hyprctl plugin load ~/.local/lib/hyprland/plugins/libhyprcapture.so")
 end)
 
 
@@ -267,18 +270,17 @@ local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 
 -- Apps
 hl.bind(mainMod .. " + Q",       hl.dsp.exec_cmd("ghostty"))
-hl.bind(mainMod .. " + Z",       hl.dsp.exec_cmd("flatpak run com.qq.QQ"))
+hl.bind(mainMod .. " + Z",       hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + E",       hl.dsp.exec_cmd("nautilus"))
 hl.bind(mainMod .. " + W",       hl.dsp.exec_cmd("firefox"))
 
-hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("killall rofi || rofi -show drun -disable-history"), { release = true })
+hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("pgrep hyprcapture-ui >/dev/null || (killall rofi || rofi -show drun -disable-history)"), { release = true })
 hl.bind("ALT + Tab", hl.dsp.exec_cmd("~/Scripts/WindowSwitcher"))
 
 -- Window control
 hl.bind(mainMod .. " + C",       hl.dsp.window.close())
 hl.bind(mainMod .. " + J",       hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + F",       hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + F1",      hl.dsp.window.fullscreen())
 
 hl.bind(mainMod .. " + B",       hl.dsp.exec_cmd("pkill -USR1 waybar"))
 
@@ -294,7 +296,7 @@ hl.bind(mainMod .. " + SHIFT + C",    hl.dsp.exec_cmd("hyprpicker -a -n"))
 hl.bind(mainMod .. " + escape",       hl.dsp.exec_cmd("killall waybar; waybar & killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &"))
 
 -- Screenshots & Screen Recording (HyprCapture)
-hl.bind(mainMod .. " + SHIFT + S", hl.plugin.hyprcapture.open)
+hl.bind(mainMod .. " + SHIFT + S", function() hl.plugin.hyprcapture.open() end)
 hl.bind(mainMod .. " + SHIFT + W", function() hl.plugin.hyprcapture.open("window") end)
 hl.bind(mainMod .. " + SHIFT + F", function() hl.plugin.hyprcapture.open("fullscreen") end)
 

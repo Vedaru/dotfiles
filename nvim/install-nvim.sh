@@ -130,6 +130,75 @@ patch_git_conflict() {
   echo "  [patch] git-conflict nil-guard on position.marks"
 }
 
+# Disable LazyVim distro keymaps at source (all keymaps live in user config)
+patch_lazyvim_keymaps() {
+  local f="$LAZY_DIR/LazyVim/lua/lazyvim/config/keymaps.lua"
+  [[ -f "$f" ]] || return 0
+  if grep -q 'Disabled at source' "$f"; then
+    echo "  [skip] lazyvim keymaps already disabled"
+    return 0
+  fi
+  cat > "$f" <<'EOF'
+-- Disabled at source — all keymaps now live in ~/.config/nvim/lua/config/keymaps.lua
+-- This avoids the fragile LazyVim.safe_keymap_set → Snacks.keymap.set chain.
+return {}
+EOF
+  echo "  [patch] lazyvim keymaps disabled at source"
+}
+
+# Disable LazyVim distro autocmds at source (all autocmds live in user config)
+patch_lazyvim_autocmds() {
+  local f="$LAZY_DIR/LazyVim/lua/lazyvim/config/autocmds.lua"
+  [[ -f "$f" ]] || return 0
+  if grep -q 'Disabled at source' "$f"; then
+    echo "  [skip] lazyvim autocmds already disabled"
+    return 0
+  fi
+  cat > "$f" <<'EOF'
+-- Disabled at source — all autocmds now live in ~/.config/nvim/lua/config/autocmds.lua
+return {}
+EOF
+  echo "  [patch] lazyvim autocmds disabled at source"
+}
+
+# Strip LazyVim's VeryLazy callback down to what this config needs:
+# autocmds/keymaps loads (they also pull in the user config/*.lua files)
+# and the deferred clipboard restore. Removes format/news/root setup,
+# LazyExtras/LazyHealth commands, health-valid extension, import-order check.
+patch_lazyvim_init() {
+  local f="$LAZY_DIR/LazyVim/lua/lazyvim/config/init.lua"
+  [[ -f "$f" ]] || return 0
+  if grep -q 'PATCHED (vedaru)' "$f"; then
+    echo "  [skip] lazyvim init already patched"
+    return 0
+  fi
+  local awkfile
+  awkfile="$(mktemp)"
+  cat > "$awkfile" <<'AWKEOF'
+/^    callback = function\(\)$/ {
+  print
+  print "      -- PATCHED (vedaru): stripped format/news/root setup, LazyExtras/LazyHealth commands,"
+  print "      -- health-valid extension and import-order check. Kept: autocmds/keymaps loads"
+  print "      -- (they also load the user config/*.lua files) and the deferred clipboard restore."
+  print "      if lazy_autocmds then"
+  print "        M.load(\"autocmds\")"
+  print "      end"
+  print "      M.load(\"keymaps\")"
+  print "      if lazy_clipboard ~= nil then"
+  print "        vim.opt.clipboard = lazy_clipboard"
+  print "      end"
+  in_cb = 1
+  next
+}
+in_cb && /^    end,$/ { print; in_cb = 0; next }
+in_cb { next }
+{ print }
+AWKEOF
+  awk -f "$awkfile" "$f" > "$f.new" && mv "$f.new" "$f"
+  rm -f "$awkfile"
+  echo "  [patch] lazyvim init stripped (format/news/root, LazyExtras/LazyHealth)"
+}
+
 # ── main ──────────────────────────────────────────────────────────
 main() {
   local mode="${1:-}"
@@ -154,6 +223,9 @@ main() {
 
   patch_snacks
   patch_git_conflict
+  patch_lazyvim_keymaps
+  patch_lazyvim_autocmds
+  patch_lazyvim_init
 
   echo ""
   echo "── Treesitter parsers ───────────────────────────────"

@@ -6,20 +6,6 @@ local augroup = function(name)
   return vim.api.nvim_create_augroup("user_" .. name, { clear = true })
 end
 
--- 进入插入模式关闭当前行高亮，离开时恢复，减少视觉干扰
-vim.api.nvim_create_autocmd("InsertEnter", {
-  group = augroup("cursorline"),
-  callback = function()
-    vim.opt_local.cursorline = false
-  end,
-})
-vim.api.nvim_create_autocmd("InsertLeave", {
-  group = augroup("cursorline"),
-  callback = function()
-    vim.opt_local.cursorline = true
-  end,
-})
-
 -- 某些大文件关闭重型功能，保持流畅
 vim.api.nvim_create_autocmd("BufReadPre", {
   group = augroup("bigfile"),

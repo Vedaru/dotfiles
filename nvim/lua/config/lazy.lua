@@ -22,7 +22,7 @@ require("lazy").setup({
     lazy = false,
     version = false,
   },
-  install = { missing = false, colorscheme = { "gruvbox", "tokyonight", "habamax" } },
+  install = { missing = false, colorscheme = { "gruvbox", "habamax" } },
 
   -- ZERO NETWORK: never check for updates, never auto-install, never auto-update lazy itself
   checker = { enabled = false },

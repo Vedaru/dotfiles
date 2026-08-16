@@ -12,7 +12,8 @@ opt.pumheight = 12 -- 补全菜单最多显示 12 行
 -- ── 编辑体验 ──────────────────────────────────────────────────────
 opt.scrolloff = 8 -- 光标上下保留 8 行可见
 opt.sidescrolloff = 8 -- 光标左右保留 8 列可见
-opt.cursorline = true -- 高亮当前行
+opt.cursorline = true -- 开启 cursorline：仅用于高亮光标所在行的行号（配合 cursorlineopt）
+opt.cursorlineopt = "number" -- 只高亮行号，不高亮整行（终端无行号列，故不受影响）
 opt.wrap = false -- 默认不折行
 opt.linebreak = true -- 折行时按单词边界断行
 opt.signcolumn = "yes" -- 始终显示左侧符号列，避免抖动

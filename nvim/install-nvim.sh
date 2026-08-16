@@ -24,7 +24,6 @@ LAZY_DIR="$NVIM_DATA/lazy"
 declare -A PLUGINS=(
   ["lazy.nvim"]="https://github.com/folke/lazy.nvim.git"
   ["LazyVim"]="https://github.com/LazyVim/LazyVim.git"
-  ["tokyonight.nvim"]="https://github.com/folke/tokyonight.nvim.git"
   ["gruvbox.nvim"]="https://github.com/ellisonleao/gruvbox.nvim.git"
   ["snacks.nvim"]="https://github.com/folke/snacks.nvim.git"
   ["oil.nvim"]="https://github.com/stevearc/oil.nvim.git"
@@ -38,6 +37,7 @@ declare -A PLUGINS=(
   ["grug-far.nvim"]="https://github.com/MagicDuck/grug-far.nvim.git"
   ["mini.icons"]="https://github.com/nvim-mini/mini.icons.git"
   ["mini.statusline"]="https://github.com/nvim-mini/mini.statusline.git"
+  ["mini.surround"]="https://github.com/nvim-mini/mini.surround.git"
   ["leap.nvim"]="https://codeberg.org/andyg/leap.nvim"
 )
 

@@ -75,18 +75,18 @@
     "format": " {icon} ",
     "format-icons": {
       "notification": "󰂚",
-      "none": "󰂛",
-      "dnd-notification": "󰂚",
+      "none": "󰂜",
+      "dnd-notification": "󰂠",
       "dnd-none": "󰂛",
       "inhibited-notification": "󰂚",
-      "inhibited-none": "󰂛",
-      "dnd-inhibited-notification": "󰂚",
+      "inhibited-none": "󰂜",
+      "dnd-inhibited-notification": "󰂠",
       "dnd-inhibited-none": "󰂛"
     },
     "return-type": "json",
     "exec": "~/.config/waybar/scripts/notification-state.sh",
-    "on-click": "makoctl dismiss -a 2>/dev/null",
-    "on-click-right": "makoctl mode -t do-not-disturb 2>/dev/null",
+    "on-click": "makoctl mode -t do-not-disturb 2>/dev/null; pkill -RTMIN+8 waybar",
+    "signal": 8,
     "escape": true,
     "interval": 5
   },
@@ -131,7 +131,7 @@
     "tooltip-format-ethernet": "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
     "tooltip-format-disconnected": "Disconnected",
     "interval": 3,
-    "on-click": "ghostty -e /usr/bin/nmtui"
+    "on-click": "ghostty -e /home/vedaru/.cargo/bin/wlctl"
   },
 
   "bluetooth": {
@@ -157,13 +157,15 @@
 
   "pulseaudio": {
     "format": "{volume}% {icon}",
-    "format-muted": "",
+    "format-muted": "{icon}",
     "format-icons": {
-      "default": ["", "", ""]
+      "default": ["󰕿", "󰖀", "󰕾"]
     },
     "tooltip": false,
     "scroll-step": 1,
-    "on-click": "ghostty -e /usr/bin/pulsemixer",
+    "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +1%",
+    "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -1%",
+    "on-click": "ghostty -e /home/vedaru/.cargo/bin/wiremix",
     "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle"
   },
 
@@ -178,7 +180,7 @@
       "warning": 20,
       "critical": 10
     },
-    "on-click": "~/.config/waybar/scripts/battery-manager.sh"
+    "on-click": "/home/vedaru/.local/bin/tlpui"
   },
 
   "group/right2": {

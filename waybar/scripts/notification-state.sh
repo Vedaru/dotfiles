@@ -17,9 +17,11 @@ if makoctl mode 2>/dev/null | grep -q "inhibited"; then
     inhibited=true
 fi
 
+# makoctl list prints one line per notification ("Notification <id>: <summary>")
+notification_count=$(makoctl list 2>/dev/null | grep -c '^Notification' || true)
+
 has_notifications=false
-notification_count=$(makoctl list 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']))" 2>/dev/null || echo 0)
-if [ "$notification_count" -gt 0 ] 2>/dev/null; then
+if [ "${notification_count:-0}" -gt 0 ] 2>/dev/null; then
     has_notifications=true
 fi
 
@@ -41,4 +43,10 @@ else
     alt="none"
 fi
 
-echo "{\"text\":\"\", \"alt\":\"$alt\", \"tooltip\":\"Notifications: $notification_count\"}"
+if $dnd_active; then
+    tooltip="Notifications: $notification_count (Do Not Disturb)"
+else
+    tooltip="Notifications: $notification_count"
+fi
+
+echo "{\"text\":\"\", \"alt\":\"$alt\", \"tooltip\":\"$tooltip\"}"

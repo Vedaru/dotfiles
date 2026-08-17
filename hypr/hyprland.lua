@@ -63,10 +63,12 @@ hl.env("QT_STYLE_OVERRIDE", "Breeze")  -- Qt6 dark theme for HyprCapture
 hl.env("XMODIFIERS", "@im=fcitx")
 hl.env("GLFW_IM_MODULE", "fcitx")
 hl.env("SDL_IM_MODULE", "fcitx")
--- Chromium/Electron apps (Helium) only read the system proxy setting when
--- they detect GNOME/KDE in XDG_CURRENT_DESKTOP; keep Hyprland first so
--- Hyprland-aware tooling still sees it
-hl.env("XDG_CURRENT_DESKTOP", "Hyprland:GNOME")
+-- NOTE: do NOT append :GNOME to XDG_CURRENT_DESKTOP here. hl.env leaks into
+-- the systemd user manager → xdg-desktop-portal matches gnome.portal backends
+-- (deprecated-UseIn warnings, 25s start timeouts, waybar's tray D-Bus call
+-- times out and waybar dies). Helium (the app this line existed for) is gone;
+-- if a Chromium/Electron app ever needs GNOME detection again, put
+-- `env XDG_CURRENT_DESKTOP=Hyprland:GNOME` in that app's own .desktop Exec.
 
 
 -----------------------

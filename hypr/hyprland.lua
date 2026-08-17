@@ -231,6 +231,10 @@ hl.config({
         initial_workspace_tracking = 0,
     },
 
+    render = {
+        direct_scanout = true,
+    },
+
     xwayland = {
         force_zero_scaling = true,
     },
@@ -283,7 +287,7 @@ local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 hl.bind(mainMod .. " + Q",       hl.dsp.exec_cmd("ghostty"))
 hl.bind(mainMod .. " + Z",       hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + E",       hl.dsp.exec_cmd("nautilus"))
-hl.bind(mainMod .. " + W",       hl.dsp.exec_cmd("firefox"))
+hl.bind(mainMod .. " + S",       hl.dsp.exec_cmd("/home/vedaru/.local/opt/helium/helium"))
 
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("pgrep hyprcapture-ui >/dev/null || (killall rofi || rofi -show drun -disable-history)"), { release = true })
 hl.bind("ALT + Tab", hl.dsp.exec_cmd("~/Scripts/WindowSwitcher"))
@@ -304,7 +308,7 @@ hl.bind(mainMod .. " + L",            hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + V",            hl.dsp.exec_cmd("killall wofi || cliphist list | wofi --dmenu | cliphist decode | wl-copy"), { release = true })
 hl.bind(mainMod .. " + SHIFT + E",    hl.dsp.exec_cmd("wofi-emoji"))
 hl.bind(mainMod .. " + SHIFT + C",    hl.dsp.exec_cmd("hyprpicker -a -n"))
-hl.bind(mainMod .. " + escape",       hl.dsp.exec_cmd("killall waybar; waybar & killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &"))
+hl.bind(mainMod .. " + escape",       hl.dsp.exec_cmd("pkill -x -USR2 waybar; killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &"))
 
 -- Screenshots & Screen Recording (HyprCapture)
 hl.bind(mainMod .. " + SHIFT + S", function() hl.plugin.hyprcapture.open() end)

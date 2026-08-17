@@ -21,7 +21,7 @@ hl.monitor({
     output   = "desc:Samsung Display Corp. ATNA60HU01-0",
     mode     = "preferred",
     position = "0x0",
-    scale    = 1.33,
+    scale    = 1.25,
 })
 
 
@@ -33,7 +33,12 @@ hl.monitor({
 
 hl.on("hyprland.start", function()
     hl.exec_cmd("fcitx5 -d")
-    hl.exec_cmd("waybar")
+    -- ly doesn't push the session env into systemd/D-Bus; do it here so
+    -- D-Bus-activated services (xdg-desktop-portal & backends) see WAYLAND_DISPLAY.
+    hl.exec_cmd("dbus-update-activation-environment --systemd --all")
+    -- Auto-restart loop: if waybar crashes it comes back in ~2s.
+    -- stderr goes to a log file instead of the console (ly sends fd2 to tty1).
+    hl.exec_cmd("sh -c 'while :; do waybar 2>>$HOME/.local/state/waybar.log; sleep 2; done &'")
     hl.exec_cmd("killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &")
     hl.exec_cmd("xhost +si:localuser:root")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
@@ -58,6 +63,10 @@ hl.env("QT_STYLE_OVERRIDE", "Breeze")  -- Qt6 dark theme for HyprCapture
 hl.env("XMODIFIERS", "@im=fcitx")
 hl.env("GLFW_IM_MODULE", "fcitx")
 hl.env("SDL_IM_MODULE", "fcitx")
+-- Chromium/Electron apps (Helium) only read the system proxy setting when
+-- they detect GNOME/KDE in XDG_CURRENT_DESKTOP; keep Hyprland first so
+-- Hyprland-aware tooling still sees it
+hl.env("XDG_CURRENT_DESKTOP", "Hyprland:GNOME")
 
 
 -----------------------
@@ -282,7 +291,7 @@ hl.bind(mainMod .. " + C",       hl.dsp.window.close())
 hl.bind(mainMod .. " + J",       hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + F",       hl.dsp.window.float({ action = "toggle" }))
 
-hl.bind(mainMod .. " + B",       hl.dsp.exec_cmd("pkill -USR1 waybar"))
+hl.bind(mainMod .. " + B",       hl.dsp.exec_cmd("pgrep -x waybar >/dev/null && pkill -USR1 waybar || waybar"))
 
 -- Move/resize with mouse
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })

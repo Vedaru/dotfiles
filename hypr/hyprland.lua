@@ -285,12 +285,12 @@ local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 
 -- Apps
 hl.bind(mainMod .. " + Q",       hl.dsp.exec_cmd("ghostty"))
-hl.bind(mainMod .. " + Z",       hl.dsp.window.fullscreen())
-hl.bind(mainMod .. " + E",       hl.dsp.exec_cmd("nautilus"))
+hl.bind(mainMod .. " + Z",       hl.dsp.window.fullscreen_state({ internal = 2, client = 1, action = "toggle" }))
+hl.bind(mainMod .. " + E",       hl.dsp.exec_cmd("pcmanfm"))
 hl.bind(mainMod .. " + S",       hl.dsp.exec_cmd("/home/vedaru/.local/opt/helium/helium"))
 
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("pgrep hyprcapture-ui >/dev/null || (killall rofi || rofi -show drun -disable-history)"), { release = true })
-hl.bind("ALT + Tab", hl.dsp.exec_cmd("~/Scripts/WindowSwitcher"))
+hl.bind("ALT + Tab", hl.dsp.exec_cmd("~/.local/bin/WindowSwitcher"))
 
 -- Window control
 hl.bind(mainMod .. " + C",       hl.dsp.window.close())
@@ -359,13 +359,25 @@ hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 -- Example window rules that are useful
 
 local suppressMaximizeRule = hl.window_rule({
-    -- Ignore maximize requests from all apps. You'll probably like this.
+    -- Ignore maximize requests from native Wayland apps. XWayland games need
+    -- real maximize/fullscreen events, so leave them alone.
     name  = "suppress-maximize-events",
-    match = { class = ".*" },
+    match = { class = ".*", xwayland = false },
 
     suppress_event = "maximize",
 })
 -- suppressMaximizeRule:set_enabled(false)
+
+local suppressFullscreenRule = hl.window_rule({
+    -- Fullscreen geometry still applies (Super+Z fills the screen), but the
+    -- app never learns it's fullscreen — browsers keep their tabs visible.
+    -- XWayland games need real fullscreen, so leave them alone.
+    name  = "suppress-fullscreen-events",
+    match = { class = ".*", xwayland = false },
+
+    suppress_event = "fullscreen",
+})
+-- suppressFullscreenRule:set_enabled(false)
 
 hl.window_rule({
     -- Fix some dragging issues with XWayland
@@ -423,8 +435,37 @@ hl.window_rule({
     border_size   = 0,
 })
 
--- Float XWayland modal dialogs (Wine/Proton game pop-ups like Wuthering Waves exit confirmation)
--- Only float non-fullscreen modals so the main game window isn't affected.
+-- Games under Wine/Proton (Faugus/umu) are XWayland windows. umu wraps the
+-- main game in `steam_app_default`; helper/child windows keep their own `.exe`
+-- class (e.g. `KRSDKExternal.exe`). Float all of them so they're never tiled
+-- (the old `games-tile` rule broke WuWa's mouse capture by forcing tile). The
+-- main game requests fullscreen on its own; we don't suppress it (the global
+-- suppress rules exempt XWayland), so the game fullscreens naturally and the
+-- mouse is captured. Sub-windows (notifications, dialogs) stay floating.
+hl.window_rule({
+    name    = "games-steam-app-float",
+    match   = { class = "^steam_app_default$", xwayland = true },
+    float   = true,
+    center  = true,
+    decorate = false,
+    no_blur  = true,
+    no_shadow = true,
+})
+
+hl.window_rule({
+    name    = "games-exe-float",
+    match   = { class = "(?i).*\\.exe$", xwayland = true },
+    float   = true,
+    center  = true,
+    decorate = false,
+    no_blur  = true,
+    no_shadow = true,
+})
+
+
+-- Float XWayland modal dialogs (Wine/Proton game pop-ups like Wuthering Waves
+-- exit confirmation). Only float non-fullscreen modals so the main game window
+-- isn't affected.
 hl.window_rule({
     name     = "xwayland-modal-float",
     match    = { xwayland = true, modal = true, fullscreen = false },
@@ -442,5 +483,16 @@ hl.window_rule({
     no_anim  = true,
 })
 
+-- Internal-fullscreen windows (Super+Z zoom mode) must not keep rounded corners
+hl.window_rule({
+    name     = "fullscreen-no-rounding",
+    match    = { fullscreen_state_internal = 2 },
+    rounding = 0,
+})
 
-
+-- Helium opens in "zoom" mode: internal fullscreen geometry (edge-to-edge,
+-- no gaps) + client maximize (the app keeps its tabs visible).
+-- Super+Z toggles back out.
+-- (helium-zoom-on-open rule removed 2026-08-17: forced fullscreen+maximize
+-- on every Helium launch, which the user experienced as "maximizes on every
+-- open" and which re-poisoned Chromium's saved window state.)

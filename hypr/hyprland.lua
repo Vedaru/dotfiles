@@ -463,6 +463,32 @@ hl.window_rule({
 })
 
 
+-- First-launch fix: the game itself only requests fullscreen on the *second*
+-- run (saved in GameUserSettings.ini), so on the first run after a reboot the
+-- main window opens as a floating windowed surface and Wine's raw-mouse grab
+-- fails — cursor floats, camera look doesn't respond. Fullscreen the first
+-- `steam_app_default` window to appear in this session; subsequent ones
+-- (notifications, dialogs) stay floating because the flag is already set.
+-- Reset on close so the next game launch works the same way.
+local gameMainFullscreened = false
+
+hl.on("window.open", function(w)
+    if not w then return end
+    if w.class ~= "steam_app_default" then return end
+    if not w.xwayland then return end
+    if w.modal then return end
+    if gameMainFullscreened then return end
+    gameMainFullscreened = true
+    hl.dispatch(hl.dsp.window.fullscreen_state({ window = w.address, internal = 2, client = 1, action = "set" }))
+end)
+
+hl.on("window.close", function(w)
+    if w and w.class == "steam_app_default" and gameMainFullscreened then
+        gameMainFullscreened = false
+    end
+end)
+
+
 -- Float XWayland modal dialogs (Wine/Proton game pop-ups like Wuthering Waves
 -- exit confirmation). Only float non-fullscreen modals so the main game window
 -- isn't affected.

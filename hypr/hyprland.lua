@@ -259,6 +259,22 @@ hl.config({
 
         touchpad = {
             natural_scroll = true,
+            -- Hyprctl reports raw scroll factor -1.0 for this touchpad, which
+            -- makes SUPER+drag-resize (and window-edge drag) jump erratically.
+            -- Map 1.0 device units -> 1.0 logical pixel for predictable motion.
+            scroll_factor = 1.0,
+            -- Enables tap-and-drag so a single tap followed by a finger drag
+            -- acts as a held left click + drag. With drag_lock = 2, the
+            -- button stays held after the finger lifts; a second tap releases.
+            tap_and_drag = true,
+            -- Keeps the drag active after the finger lifts; tap again to
+            -- release. 0 = disabled, 1 = single-tap timeout, 2 = drag lock.
+            drag_lock = 2,
+            -- Softbutton mode: 2-finger tap can produce a real held right
+            -- click for drag. (clickfinger mode classifies 2-finger motion
+            -- as scroll, which would prevent the right mouse resize bind
+            -- from ever firing.)
+            clickfinger_behavior = false,
         },
     },
 })
@@ -274,6 +290,15 @@ hl.gesture({
 hl.device({
     name        = "epic-mouse-v1",
     sensitivity = -0.5,
+})
+
+-- ELAN touchpad: override scroll factor so SUPER+drag-resize doesn't jump.
+-- hyprctl shows the raw factor as -1.0 for this device, which makes
+-- touchpad-driven resize unusable. Keeping it consistent with the global
+-- touchpad block above.
+hl.device({
+    name         = "elan06fa:00-04f3:327e-touchpad",
+    scroll_factor = 1.0,
 })
 
 
@@ -302,6 +327,25 @@ hl.bind(mainMod .. " + B",       hl.dsp.exec_cmd("pgrep -x waybar >/dev/null && 
 -- Move/resize with mouse
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+
+-- Vim-style resize for floating windows (SUPER + SHIFT + hjkl).
+-- Only acts when the focused window is floating, so tiled windows are
+-- unaffected and SUPER + J (togglesplit) still works as before.
+-- RESIZE_STEP = px per key press.
+local RESIZE_STEP = 100
+
+local function resize_floating(dx, dy)
+    local win = hl.get_active_window()
+    if not win or not win.floating then
+        return
+    end
+    hl.dispatch(hl.dsp.window.resize({ x = dx, y = dy, relative = true }))
+end
+
+hl.bind(mainMod .. " + SHIFT + H", function() resize_floating(-RESIZE_STEP, 0) end, { repeating = true })
+hl.bind(mainMod .. " + SHIFT + L", function() resize_floating( RESIZE_STEP, 0) end, { repeating = true })
+hl.bind(mainMod .. " + SHIFT + K", function() resize_floating(0, -RESIZE_STEP) end, { repeating = true })
+hl.bind(mainMod .. " + SHIFT + J", function() resize_floating(0,  RESIZE_STEP) end, { repeating = true })
 
 -- Misc
 hl.bind(mainMod .. " + L",            hl.dsp.exec_cmd("hyprlock"))

@@ -38,6 +38,8 @@ declare -A PLUGINS=(
   ["mini.icons"]="https://github.com/nvim-mini/mini.icons.git"
   ["mini.statusline"]="https://github.com/nvim-mini/mini.statusline.git"
   ["mini.surround"]="https://github.com/nvim-mini/mini.surround.git"
+  ["mini.pairs"]="https://github.com/nvim-mini/mini.pairs.git"
+  ["undotree"]="https://github.com/mbbill/undotree.git"
   ["leap.nvim"]="https://codeberg.org/andyg/leap.nvim"
 )
 
@@ -69,6 +71,11 @@ install_config() {
   for item in "${CONFIG_FILES[@]}"; do
     local src="$SCRIPT_DIR/$item" dst="$NVIM_CONFIG/$item"
     if [[ ! -e "$src" ]]; then echo "  [warn] $item missing"; continue; fi
+    # In-place run (repo == config dir): src and dst are the same file
+    if [[ "$(readlink -f "$src")" == "$(readlink -f "$dst")" ]]; then
+      echo "  [skip] $item (already in place)"
+      continue
+    fi
     if [[ -d "$src" ]]; then mkdir -p "$dst"; cp -r "$src"/* "$dst"/
     else cp "$src" "$dst"; fi
     echo "  [copy] $item"

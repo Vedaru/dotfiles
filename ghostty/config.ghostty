@@ -1,2 +1,5 @@
 background = #1d2021
 mouse-hide-while-typing = true
+window-padding-balance = true
+font-family = JetBrainsMono Nerd Font
+font-size = 12

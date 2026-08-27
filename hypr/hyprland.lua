@@ -161,24 +161,24 @@ hl.curve("quick",          { type = "bezier", points = { {0.15, 0},    {0.1, 1} 
 hl.curve("easy",           { type = "spring", mass = 1, stiffness = 238.1191, dampening = 24.21279333 })
 hl.curve("ease-out-expo",  { type = "bezier", points = { {0.19, 1}, {0.22, 1} } })
 
-hl.animation({ leaf = "global",        enabled = true,  speed = 10,   bezier = "default" })
+hl.animation({ leaf = "global",        enabled = false })
 hl.animation({ leaf = "border",        enabled = false })
 hl.animation({ leaf = "borderangle",   enabled = false })
-hl.animation({ leaf = "windows",       enabled = true,  speed = 4.79, spring = "easy" })
-hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 2.5,  bezier = "ease-out-expo", style = "gnomed" })
-hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 2,    bezier = "ease-out-expo", style = "gnomed" })
-hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 1.73, bezier = "almostLinear" })
-hl.animation({ leaf = "fadeOut",       enabled = true,  speed = 1.46, bezier = "almostLinear" })
-hl.animation({ leaf = "fade",          enabled = true,  speed = 4,    bezier = "default" })
-hl.animation({ leaf = "layers",        enabled = true,  speed = 3.81, bezier = "easeOutQuint" })
-hl.animation({ leaf = "layersIn",      enabled = true,  speed = 4,    bezier = "easeOutQuint", style = "fade" })
-hl.animation({ leaf = "layersOut",     enabled = true,  speed = 1.5,  bezier = "linear",       style = "fade" })
-hl.animation({ leaf = "fadeLayersIn",  enabled = true,  speed = 1.79, bezier = "almostLinear" })
-hl.animation({ leaf = "fadeLayersOut", enabled = true,  speed = 1.39, bezier = "almostLinear" })
-hl.animation({ leaf = "workspaces",    enabled = true,  speed = 5,    bezier = "ease-out-expo", style = "slidefade 40%" })
-hl.animation({ leaf = "workspacesIn",  enabled = true,  speed = 1.21, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "workspacesOut", enabled = true,  speed = 1.94, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "zoomFactor",    enabled = true,  speed = 7,    bezier = "quick" })
+hl.animation({ leaf = "windows",       enabled = false })
+hl.animation({ leaf = "windowsIn",     enabled = false })
+hl.animation({ leaf = "windowsOut",    enabled = false })
+hl.animation({ leaf = "fadeIn",        enabled = false })
+hl.animation({ leaf = "fadeOut",       enabled = false })
+hl.animation({ leaf = "fade",          enabled = false })
+hl.animation({ leaf = "layers",        enabled = false })
+hl.animation({ leaf = "layersIn",      enabled = false })
+hl.animation({ leaf = "layersOut",     enabled = false })
+hl.animation({ leaf = "fadeLayersIn",  enabled = false })
+hl.animation({ leaf = "fadeLayersOut", enabled = false })
+hl.animation({ leaf = "workspaces",    enabled = false })
+hl.animation({ leaf = "workspacesIn",  enabled = false })
+hl.animation({ leaf = "workspacesOut", enabled = false })
+hl.animation({ leaf = "zoomFactor",    enabled = false })
 
 -- Ref https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/
 -- "Smart gaps" / "No gaps when only"
@@ -328,24 +328,19 @@ hl.bind(mainMod .. " + B",       hl.dsp.exec_cmd("pgrep -x waybar >/dev/null && 
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- Vim-style resize for floating windows (SUPER + SHIFT + hjkl).
--- Only acts when the focused window is floating, so tiled windows are
--- unaffected and SUPER + J (togglesplit) still works as before.
+-- Vim-style resize (SUPER + SHIFT + hjkl).
+-- Works on both floating and tiled windows.
 -- RESIZE_STEP = px per key press.
 local RESIZE_STEP = 100
 
-local function resize_floating(dx, dy)
-    local win = hl.get_active_window()
-    if not win or not win.floating then
-        return
-    end
+local function resize_window(dx, dy)
     hl.dispatch(hl.dsp.window.resize({ x = dx, y = dy, relative = true }))
 end
 
-hl.bind(mainMod .. " + SHIFT + H", function() resize_floating(-RESIZE_STEP, 0) end, { repeating = true })
-hl.bind(mainMod .. " + SHIFT + L", function() resize_floating( RESIZE_STEP, 0) end, { repeating = true })
-hl.bind(mainMod .. " + SHIFT + K", function() resize_floating(0, -RESIZE_STEP) end, { repeating = true })
-hl.bind(mainMod .. " + SHIFT + J", function() resize_floating(0,  RESIZE_STEP) end, { repeating = true })
+hl.bind(mainMod .. " + SHIFT + H", function() resize_window(-RESIZE_STEP, 0) end, { repeating = true })
+hl.bind(mainMod .. " + SHIFT + L", function() resize_window( RESIZE_STEP, 0) end, { repeating = true })
+hl.bind(mainMod .. " + SHIFT + K", function() resize_window(0, -RESIZE_STEP) end, { repeating = true })
+hl.bind(mainMod .. " + SHIFT + J", function() resize_window(0,  RESIZE_STEP) end, { repeating = true })
 
 -- Misc
 hl.bind(mainMod .. " + L",            hl.dsp.exec_cmd("hyprlock"))

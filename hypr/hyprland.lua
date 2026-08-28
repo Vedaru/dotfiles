@@ -502,13 +502,14 @@ hl.window_rule({
 })
 
 
--- First-launch fix: the game itself only requests fullscreen on the *second*
--- run (saved in GameUserSettings.ini), so on the first run after a reboot the
--- main window opens as a floating windowed surface and Wine's raw-mouse grab
--- fails — cursor floats, camera look doesn't respond. Fullscreen the first
--- `steam_app_default` window to appear in this session; subsequent ones
--- (notifications, dialogs) stay floating because the flag is already set.
--- Reset on close so the next game launch works the same way.
+-- First-launch fix: on the first run after a reboot the game opens as a
+-- floating windowed surface (the game only requests fullscreen on the
+-- *second* run, when GameUserSettings.ini is already saved). Wine's
+-- raw-mouse grab fails in windowed mode, so the cursor floats and camera
+-- look doesn't respond. Fullscreen the first `steam_app_default` window
+-- to appear in this session; subsequent ones (notifications, dialogs)
+-- stay floating because the flag is already set. Reset on close so the
+-- next game launch works the same way.
 local gameMainFullscreened = false
 
 hl.on("window.open", function(w)
@@ -518,7 +519,7 @@ hl.on("window.open", function(w)
     if w.modal then return end
     if gameMainFullscreened then return end
     gameMainFullscreened = true
-    hl.dispatch(hl.dsp.window.fullscreen_state({ window = w.address, internal = 2, client = 1, action = "set" }))
+    hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 2, client = 1, action = "set" }))
 end)
 
 hl.on("window.close", function(w)

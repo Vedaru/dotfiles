@@ -483,7 +483,7 @@ hl.window_rule({
 -- mouse is captured. Sub-windows (notifications, dialogs) stay floating.
 hl.window_rule({
     name    = "games-steam-app-float",
-    match   = { class = "^steam_app_default$", xwayland = true },
+    match   = { class = "^steam_app_default$", xwayland = true, fullscreen = false },
     float   = true,
     center  = true,
     decorate = false,
@@ -493,7 +493,7 @@ hl.window_rule({
 
 hl.window_rule({
     name    = "games-exe-float",
-    match   = { class = "(?i).*\\.exe$", xwayland = true },
+    match   = { class = "(?i).*\\.exe$", xwayland = true, fullscreen = false },
     float   = true,
     center  = true,
     decorate = false,
@@ -502,15 +502,22 @@ hl.window_rule({
 })
 
 
--- First-launch fix: on the first run after a reboot the game opens as a
--- floating windowed surface (the game only requests fullscreen on the
--- *second* run, when GameUserSettings.ini is already saved). Wine's
--- raw-mouse grab fails in windowed mode, so the cursor floats and camera
--- look doesn't respond. Fullscreen the first `steam_app_default` window
--- to appear in this session; subsequent ones (notifications, dialogs)
--- stay floating because the flag is already set. Reset on close so the
--- next game launch works the same way.
+-- First-launch fix + keep-main-fullscreen: on the first run after a reboot
+-- the game opens as a floating windowed surface (the game only requests
+-- fullscreen on the *second* run, when GameUserSettings.ini is already
+-- saved). Wine's raw-mouse grab fails in windowed mode, so the cursor
+-- floats and camera look doesn't respond. Fullscreen the first
+-- `steam_app_default` window on open, and re-fullscreen it if a subwindow
+-- popping up causes the main window to drop back to floating. The flag
+-- tracks whether we've already claimed the main window so notifications
+-- (which also have `class = steam_app_default`) aren't fullscreened.
+-- Reset on close so the next game launch works the same way.
 local gameMainFullscreened = false
+
+local function fullscreenActiveGame()
+    if not gameMainFullscreened then return end
+    hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 2, client = 1, action = "set" }))
+end
 
 hl.on("window.open", function(w)
     if not w then return end
@@ -519,7 +526,20 @@ hl.on("window.open", function(w)
     if w.modal then return end
     if gameMainFullscreened then return end
     gameMainFullscreened = true
-    hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 2, client = 1, action = "set" }))
+    fullscreenActiveGame()
+end)
+
+hl.on("window.fullscreen", function(w)
+    -- If the main game window drops out of fullscreen while it's still
+    -- open (caused by a subwindow being mapped), re-fullscreen it.
+    if not w then return end
+    if w.class ~= "steam_app_default" then return end
+    if not w.xwayland then return end
+    if w.modal then return end
+    if not gameMainFullscreened then return end
+    if w.fullscreen == 0 then
+        fullscreenActiveGame()
+    end
 end)
 
 hl.on("window.close", function(w)

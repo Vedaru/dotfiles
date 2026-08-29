@@ -508,15 +508,15 @@ hl.window_rule({
 -- saved). Wine's raw-mouse grab fails in windowed mode, so the cursor
 -- floats and camera look doesn't respond. Fullscreen the first
 -- `steam_app_default` window on open, and re-fullscreen it if a subwindow
--- popping up causes the main window to drop back to floating. The flag
--- tracks whether we've already claimed the main window so notifications
--- (which also have `class = steam_app_default`) aren't fullscreened.
--- Reset on close so the next game launch works the same way.
-local gameMainFullscreened = false
+-- popping up causes the main window to drop back to floating. Store the
+-- main window's address and target it explicitly — the active window
+-- changes to the subwindow when it pops up, so targeting active would
+-- fullscreen the wrong window.
+local gameMainAddr = nil
 
-local function fullscreenActiveGame()
-    if not gameMainFullscreened then return end
-    hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 2, client = 1, action = "set" }))
+local function fullscreenMainGame()
+    if not gameMainAddr then return end
+    hl.dispatch(hl.dsp.window.fullscreen_state({ window = gameMainAddr, internal = 2, client = 1, action = "set" }))
 end
 
 hl.on("window.open", function(w)
@@ -524,9 +524,9 @@ hl.on("window.open", function(w)
     if w.class ~= "steam_app_default" then return end
     if not w.xwayland then return end
     if w.modal then return end
-    if gameMainFullscreened then return end
-    gameMainFullscreened = true
-    fullscreenActiveGame()
+    if gameMainAddr then return end
+    gameMainAddr = w.address
+    fullscreenMainGame()
 end)
 
 hl.on("window.fullscreen", function(w)
@@ -536,15 +536,16 @@ hl.on("window.fullscreen", function(w)
     if w.class ~= "steam_app_default" then return end
     if not w.xwayland then return end
     if w.modal then return end
-    if not gameMainFullscreened then return end
+    if not gameMainAddr then return end
+    if w.address ~= gameMainAddr then return end
     if w.fullscreen == 0 then
-        fullscreenActiveGame()
+        fullscreenMainGame()
     end
 end)
 
 hl.on("window.close", function(w)
-    if w and w.class == "steam_app_default" and gameMainFullscreened then
-        gameMainFullscreened = false
+    if w and w.address == gameMainAddr then
+        gameMainAddr = nil
     end
 end)
 

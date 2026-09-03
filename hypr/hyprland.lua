@@ -38,7 +38,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd --all")
     -- Auto-restart loop: if waybar crashes it comes back in ~2s.
     -- stderr goes to a log file instead of the console (ly sends fd2 to tty1).
-    hl.exec_cmd("sh -c 'while :; do waybar 2>>$HOME/.local/state/waybar.log; sleep 2; done &'")
+    -- The initial wait-for-wayland guard avoids the login race where the
+    -- first launch tries DISPLAY=:0 (Xwayland) before Wayland is connectable.
+    hl.exec_cmd("sh -c 'while ! [ -S \"$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY\" ]; do sleep 0.5; done; while :; do waybar 2>>$HOME/.local/state/waybar.log; sleep 2; done &'")
     hl.exec_cmd("killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &")
     hl.exec_cmd("xhost +si:localuser:root")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")

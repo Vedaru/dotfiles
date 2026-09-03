@@ -191,7 +191,7 @@
   "custom/power-expand-icon": {
     "format": "⏻",
     "tooltip": false,
-    "on-click": "wlogout"
+    "on-click": "wlogout -b 5"
   },
 
   "group/right3": {

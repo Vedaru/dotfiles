@@ -344,6 +344,7 @@ hl.bind(mainMod .. " + SHIFT + J", function() resize_window(0,  RESIZE_STEP) end
 
 -- Misc
 hl.bind(mainMod .. " + L",            hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + X",            hl.dsp.exec_cmd("pgrep -x wlogout >/dev/null && pkill -x wlogout || wlogout -b 5"))
 hl.bind(mainMod .. " + V",            hl.dsp.exec_cmd("killall wofi || cliphist list | wofi --dmenu | cliphist decode | wl-copy"), { release = true })
 hl.bind(mainMod .. " + SHIFT + E",    hl.dsp.exec_cmd("wofi-emoji"))
 hl.bind(mainMod .. " + SHIFT + C",    hl.dsp.exec_cmd("hyprpicker -a -n"))

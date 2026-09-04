@@ -221,7 +221,7 @@ local mainMod = "SUPER"
 
 hl.bind(mainMod .. " + Q",       hl.dsp.exec_cmd("ghostty"))
 hl.bind(mainMod .. " + Z",       hl.dsp.window.fullscreen_state({ internal = 2, client = 1, action = "toggle" }))
-hl.bind(mainMod .. " + E",       hl.dsp.exec_cmd("pcmanfm"))
+hl.bind(mainMod .. " + E",       hl.dsp.exec_cmd("ghostty -e bash -ic \"n\""))
 hl.bind(mainMod .. " + S",       hl.dsp.exec_cmd("/home/vedaru/.local/opt/helium/helium"))
 
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("pgrep hyprcapture-ui >/dev/null || (killall rofi || rofi -show drun -disable-history)"), { release = true })
@@ -318,28 +318,6 @@ hl.window_rule({
     match = { class = "hyprland-run" },
     move  = "20 monitor_h-120",
     float = true,
-})
-
-hl.window_rule({
-    name     = "gtk4-popup-fix",
-    match    = {
-        class = "^$",
-        title = "^$",
-        float  = true,
-    },
-    no_blur       = true,
-    no_shadow     = true,
-    rounding      = 0,
-    border_size   = 0,
-})
-
-hl.window_rule({
-    name     = "gtk4-popup-fix-2",
-    match    = { title = "^(.*popup.*)$" },
-    no_blur       = true,
-    no_shadow     = true,
-    rounding      = 0,
-    border_size   = 0,
 })
 
 -- ADDED: strip decoration from ANY XWayland floating surface, not just ones

@@ -54,25 +54,22 @@ hl.env("SDL_IM_MODULE", "fcitx")
 
 hl.config({
     general = {
-        gaps_in  = 5,
-        gaps_out = 10,
+        gaps_in  = 0,
+        gaps_out = 0,
         border_size = 2,
         col = {
             active_border   = "rgba(E0B25Bff)",
             inactive_border = "rgba(372B1Bff)",
         },
-        resize_on_border = false,
+        resize_on_border = true,
         allow_tearing = false,
         no_focus_fallback = true,
         layout = "dwindle",
     },
 
     decoration = {
-        rounding       = 14,
-        rounding_power = 2,
-
         active_opacity   = 1.0,
-        inactive_opacity = 0.96,
+        inactive_opacity = 1.0,
 
         shadow = {
             enabled = false,

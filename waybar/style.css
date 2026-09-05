@@ -39,7 +39,7 @@
 }
 
 window#waybar {
-  background-color: transparent;
+  background-color: @surface-container;
 }
 
 /* ---------- Tonal pill groups: fill only, no border, soft shadow for lift ---------- */
@@ -50,23 +50,23 @@ window#waybar {
 #right1,
 #right2,
 #right3 {
-  border-radius: 16px;
-  background-color: @surface-container;
+  border-radius: 0;
+  background-color: transparent;
 }
 
-#left1  { margin: 0 4px 0 0; padding: 0 4px; }
-#left2  { margin: 0 4px 0 0; padding: 0 4px; }
+#left1  { margin: 0; padding: 0 4px; }
+#left2  { margin: 0; padding: 0 4px; }
 #left3  { margin: 0; padding: 0 4px; }
-#right1 { margin: 0 4px 0 0; padding: 0 6px; }
-#right2 { margin: 0 4px 0 0; padding: 0 9px 0 6px; }
-#right3 { margin: 0; padding: 0 0 0 4px; }
+#right1 { margin: 0; padding: 0 6px; }
+#right2 { margin: 0; padding: 0 6px; }
+#right3 { margin: 0; padding: 0 4px; }
 
 /* ---------- Buttons / workspaces ---------- */
 
 button {
   box-shadow: none;
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 #workspaces {
@@ -75,10 +75,10 @@ button {
 
 #workspaces button {
   padding: 0px 8px;
-  margin: 4px 2px;
+  margin: 4px 0;
   color: @on-surface-variant;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 0;
   background-color: transparent;
 }
 
@@ -121,8 +121,8 @@ button {
 #clock {
   color: @on-surface;
   padding: 0 7px;
-  margin: 0 2px;
-  border-radius: 12px;
+  margin: 0;
+  border-radius: 0;
 }
 
 /* Icon-only modules: give them consistent width so they align evenly
@@ -160,7 +160,7 @@ button {
 
 /* Recording pill — hidden when idle, red dot when active */
 #left3 {
-  border-radius: 16px;
+  border-radius: 0;
   background-color: transparent;
   padding: 0;
   margin: 0;
@@ -182,7 +182,7 @@ button {
   font-size: 10px;
   padding: 4px 12px;
   margin: 0;
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 #custom-notifications {
@@ -216,7 +216,7 @@ button {
 #custom-shutdown {
   color: @primary;
   margin: 0 0;
-  border-radius: 10px;
+  border-radius: 0;
 }
 
 #custom-shutdown:hover {
@@ -224,7 +224,7 @@ button {
   background-color: @primary;
   font-weight: 700;
   margin: 0 0;
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 /* Tray group */
@@ -239,7 +239,7 @@ button {
 #tray > .needs-attention {
   -gtk-icon-effect: highlight;
   background-color: @urgent;
-  border-radius: 10px;
+  border-radius: 0;
 }
 
 /* Clock is the one place a flat, fully-saturated primary tone is used --
@@ -249,14 +249,14 @@ button {
   background-color: @primary;
   font-weight: 700;
   margin: 0 0;
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 /* ---------- Tooltips ---------- */
 tooltip {
   padding: 6px 10px;
   background: @surface-container-high;
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 tooltip label {

@@ -17,9 +17,9 @@
   "reload_style_on_change": true,
   "spacing": 0,
   "height": 0,
-  "margin-top": 6,
-  "margin-left": 8,
-  "margin-right": 8,
+  "margin-top": 0,
+  "margin-left": 0,
+  "margin-right": 0,
   "margin-bottom": 0,
 
   "modules-left": ["group/left1", "group/left2", "group/left3"],
@@ -196,20 +196,7 @@
 
   "group/right3": {
     "orientation": "inherit",
-    "modules": ["group/tray-expander", "clock"]
-  },
-
-  "group/tray-expander": {
-    "orientation": "inherit",
-    "drawer": {
-      "transition-duration": 600,
-      "children-class": "tray-group-item"
-    },
-    "modules": ["custom/tray-expand-icon", "tray"]
-  },
-  "custom/tray-expand-icon": {
-    "format": "󰇙",
-    "tooltip": false
+    "modules": ["tray", "clock"]
   },
   "tray": {
     "icon-size": 16,

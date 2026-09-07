@@ -18,9 +18,9 @@ hl.monitor({
 ------------------
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("fcitx5 -d")
     hl.exec_cmd("dbus-update-activation-environment --systemd --all")
-    hl.exec_cmd("sh -c 'while ! [ -S \"$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY\" ]; do sleep 0.5; done; while :; do waybar 2>>$HOME/.local/state/waybar.log; sleep 2; done &'")
+    hl.exec_cmd("fcitx5 -d")
+    hl.exec_cmd("waybar &")
     hl.exec_cmd("killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &")
     hl.exec_cmd("xhost +si:localuser:root")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
@@ -36,6 +36,7 @@ end)
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("AQ_DRM_DEVICES", "/dev/dri/card1")
 hl.env("QT_IM_MODULE", "fcitx")
 hl.env("QT_STYLE_OVERRIDE", "Breeze")
 hl.env("XMODIFIERS", "@im=fcitx")
@@ -222,6 +223,7 @@ hl.bind(mainMod .. " + E",       hl.dsp.exec_cmd("ghostty -e bash -ic \"n\""))
 hl.bind(mainMod .. " + S",       hl.dsp.exec_cmd("/home/vedaru/.local/opt/helium/helium"))
 
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("pgrep hyprcapture-ui >/dev/null || (killall rofi || rofi -show drun -disable-history)"), { release = true })
+hl.bind(mainMod .. " + SUPER_R", hl.dsp.exec_cmd("pgrep hyprcapture-ui >/dev/null || (killall rofi || rofi -show drun -disable-history)"), { release = true })
 hl.bind("ALT + Tab", hl.dsp.exec_cmd("~/.local/bin/WindowSwitcher"))
 
 hl.bind(mainMod .. " + C",       hl.dsp.window.close())

@@ -16,5 +16,5 @@ dotfiles/
 ## System
 
 - **OS:** Ubuntu 26.04 LTS
-- **Kernel:** 7.1.3-legionaudio
+- **Kernel:** 7.0.12-aw88399
 - **WM:** Hyprland 0.56.2

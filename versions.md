@@ -1,13 +1,13 @@
 # Dotfiles — Version Manifest
 
-Last updated: 2026-08-13
+Last updated: 2026-09-11
 
 ## System
 
 | Component | Version |
 |-----------|---------|
 | OS | Ubuntu 26.04 LTS |
-| Kernel | 7.1.3-legionaudio |
+| Kernel | 7.0.12-aw88399 |
 | Shell | bash 5.3.9 |
 
 ## Window Manager & UI

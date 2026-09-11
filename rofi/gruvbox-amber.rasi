@@ -1,0 +1,53 @@
+/* ==========================================================================
+   Gruvbox Dark Soft - recolored to match Waybar amber theme
+   Layout from gruvbox-rofi by bardisty, colors from waybar style.css
+   ========================================================================== */
+
+* {
+    /* Theme settings */
+    highlight: bold italic;
+    scrollbar: true;
+
+    /* Amber theme colors (from waybar) */
+    amber-bg:             #201709;
+    amber-bg-alt:         #2B2013;
+    amber-bg-selection:   #372B1B;
+    amber-fg:             #F2E3C8;
+    amber-fg-dim:         #C8B090;
+    amber-primary:        #E0B25B;
+    amber-primary-dark:   #5C4321;
+    amber-fg-bright:      #F6DFB4;
+    amber-urgent:         #E0785B;
+    amber-gray:           #C8B090;
+
+    /* Theme colors */
+    background:                  @amber-bg;
+    background-color:            @background;
+    foreground:                  @amber-fg;
+    border-color:                @amber-gray;
+    separatorcolor:              @border-color;
+    scrollbar-handle:            @border-color;
+
+    normal-background:           @background;
+    normal-foreground:           @foreground;
+    alternate-normal-background: @amber-bg-alt;
+    alternate-normal-foreground: @foreground;
+    selected-normal-background:  @amber-bg-selection;
+    selected-normal-foreground:  @amber-fg-bright;
+
+    active-background:           @amber-primary-dark;
+    active-foreground:           @foreground;
+    alternate-active-background: @active-background;
+    alternate-active-foreground: @active-foreground;
+    selected-active-background:  @amber-primary;
+    selected-active-foreground:  @amber-bg;
+
+    urgent-background:           @amber-urgent;
+    urgent-foreground:           @amber-bg;
+    alternate-urgent-background: @urgent-background;
+    alternate-urgent-foreground: @urgent-foreground;
+    selected-urgent-background:  @amber-urgent;
+    selected-urgent-foreground:  @urgent-foreground;
+}
+
+@import "gruvbox-common"

@@ -20,12 +20,16 @@ hl.monitor({
 hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd --all")
     hl.exec_cmd("fcitx5 -d")
-    hl.exec_cmd("waybar &")
-    hl.exec_cmd("killall swaybg; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg &")
+    -- Kill stale processes from a previous session before starting fresh ones.
+    hl.exec_cmd("killall waybar 2>/dev/null; waybar")
+    hl.exec_cmd("killall rofi 2>/dev/null")
+    hl.exec_cmd("killall swaybg 2>/dev/null; swaybg -m fill -i /home/vedaru/.local/share/backgrounds/2026-07-21-23-44-26-138800451_p0.jpg")
     hl.exec_cmd("xhost +si:localuser:root")
+    -- Wipe clipboard history BEFORE the watchers start, so nothing copied
+    -- right at login gets caught in the wipe.
+    hl.exec_cmd("cliphist wipe")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
-    hl.exec_cmd("cliphist wipe")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("hyprctl plugin load ~/.local/lib/hyprland/plugins/libhyprcapture.so")
 end)
@@ -84,85 +88,55 @@ hl.config({
             size      = 6,
             passes    = 3,
             vibrancy  = 0.20,
-            xray      = false,  -- CHANGED: was true. xray blur bypasses normal
-                                 -- opacity/stacking rules and is a known cause of
-                                 -- blur bleed/gap artifacts around new popups
-                                 -- and tooltips (XWayland ones especially).
+            xray      = false,  -- xray blur bypasses normal opacity/stacking
+                                 -- rules and is a known cause of blur bleed/gap
+                                 -- artifacts around new popups and tooltips
+                                 -- (XWayland ones especially).
         },
     },
 
+    -- Animations fully off. (Previously this set animations.enabled = true
+    -- globally and then disabled all 17 leaf animations individually while
+    -- defining 7 unused bezier curves -- same net effect, far less noise.)
     animations = {
-        enabled = true,
+        enabled = false,
     },
-})
 
--- (curves/animations block unchanged)
-hl.curve("easeOutQuint",   { type = "bezier", points = { {0.23, 1},    {0.32, 1}    } })
-hl.curve("easeInOutCubic", { type = "bezier", points = { {0.65, 0.05}, {0.36, 1}    } })
-hl.curve("linear",         { type = "bezier", points = { {0, 0},       {1, 1}       } })
-hl.curve("almostLinear",   { type = "bezier", points = { {0.5, 0.5},   {0.75, 1}    } })
-hl.curve("quick",          { type = "bezier", points = { {0.15, 0},    {0.1, 1}     } })
-hl.curve("easy",           { type = "spring", mass = 1, stiffness = 238.1191, dampening = 24.21279333 })
-hl.curve("ease-out-expo",  { type = "bezier", points = { {0.19, 1}, {0.22, 1} } })
-
-hl.animation({ leaf = "global",        enabled = false })
-hl.animation({ leaf = "border",        enabled = false })
-hl.animation({ leaf = "borderangle",   enabled = false })
-hl.animation({ leaf = "windows",       enabled = false })
-hl.animation({ leaf = "windowsIn",     enabled = false })
-hl.animation({ leaf = "windowsOut",    enabled = false })
-hl.animation({ leaf = "fadeIn",        enabled = false })
-hl.animation({ leaf = "fadeOut",       enabled = false })
-hl.animation({ leaf = "fade",          enabled = false })
-hl.animation({ leaf = "layers",        enabled = false })
-hl.animation({ leaf = "layersIn",      enabled = false })
-hl.animation({ leaf = "layersOut",     enabled = false })
-hl.animation({ leaf = "fadeLayersIn",  enabled = false })
-hl.animation({ leaf = "fadeLayersOut", enabled = false })
-hl.animation({ leaf = "workspaces",    enabled = false })
-hl.animation({ leaf = "workspacesIn",  enabled = false })
-hl.animation({ leaf = "workspacesOut", enabled = false })
-hl.animation({ leaf = "zoomFactor",    enabled = false })
-
-hl.config({
     dwindle = {
         preserve_split = true,
     },
-})
 
-hl.config({
     master = {
         new_status = "master",
     },
-})
 
-hl.config({
     scrolling = {
         fullscreen_on_one_column = true,
     },
-})
 
-----------------
-----  MISC  ----
-----------------
+    -- All debug/misc/render/xwayland settings consolidated into one call
+    -- (previously disable_splash_rendering was set in two separate
+    -- hl.config() calls).
+    debug = {
+        disable_logs = true,
+    },
 
-hl.config({
     misc = {
-        force_default_wallpaper = -1,
-        disable_hyprland_logo   = true,
-        disable_splash_rendering = true,
+        disable_splash_rendering   = true,
+        force_default_wallpaper    = -1,
+        disable_hyprland_logo      = true,
         initial_workspace_tracking = 0,
     },
 
     render = {
-        direct_scanout = false,  -- CHANGED: was true. Direct scanout forces a
-                                  -- mode switch when a popup/tooltip surface
-                                  -- appears over the scanned-out window, which
-                                  -- is a documented source of transient visual
-                                  -- artifacts right where the new surface
-                                  -- appears. Worth testing back to true later
-                                  -- once the popup issue is confirmed fixed,
-                                  -- to see if it was actually the cause.
+        direct_scanout = false,  -- Direct scanout forces a mode switch when a
+                                  -- popup/tooltip surface appears over the
+                                  -- scanned-out window, which is a documented
+                                  -- source of transient visual artifacts right
+                                  -- where the new surface appears. Worth
+                                  -- testing back to true later once the popup
+                                  -- issue is confirmed fixed, to see if it was
+                                  -- actually the cause.
     },
 
     xwayland = {
@@ -287,6 +261,10 @@ hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 ---- WINDOWS AND WORKSPACES ----
 --------------------------------
 
+-- NOTE: these two rules suppress maximize/fullscreen protocol requests from
+-- EVERY native Wayland window session-wide (match = ".*"). Left as-is from
+-- the original config -- narrow the `match` to specific app classes if you
+-- only meant to target one misbehaving client.
 local suppressMaximizeRule = hl.window_rule({
     name  = "suppress-maximize-events",
     match = { class = ".*", xwayland = false },
@@ -319,9 +297,9 @@ hl.window_rule({
     float = true,
 })
 
--- ADDED: strip decoration from ANY XWayland floating surface, not just ones
--- with empty class/title. ONLYOFFICE tooltips/popups report class "ONLYOFFICE",
--- so the two rules above never matched them. This is the direct fix for the
+-- Strips decoration from ANY XWayland floating surface, not just ones with
+-- empty class/title. ONLYOFFICE tooltips/popups report class "ONLYOFFICE", so
+-- the two rules above never matched them. This is the direct fix for the
 -- "background gap around popup" symptom.
 hl.window_rule({
     name        = "xwayland-popup-fix",

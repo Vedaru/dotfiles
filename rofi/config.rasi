@@ -1,5 +1,7 @@
-@theme "~/.config/rofi/MaterialAmber.rasi"
+@theme "~/.config/rofi/gruvbox-amber.rasi"
 
 configuration {
     terminal: "ghostty";
+    sorting-method: "fzf";
+    sort: true;
 }

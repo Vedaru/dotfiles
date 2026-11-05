@@ -81,13 +81,21 @@ map("n", "<leader>bD",  "<cmd>bd<cr>",       { desc = "Delete Buffer and Window"
 
 -- Safe bufdelete: resolve Snacks at call time (this file loads before snacks.setup()).
 -- Falls back to :bdelete! if snacks is unavailable or the call fails.
+-- DiagnosticChanged is muted around the delete because deleting many buffers
+-- retriggers diagnostics; upstream snacks does not do this (local patch moved here).
 local function bufdel(name)
   return function()
     local ok, snacks = pcall(require, "snacks")
     if ok and snacks.bufdelete then
       local fn = name and snacks.bufdelete[name] or snacks.bufdelete
-      if type(fn) == "function" and pcall(fn) then
-        return
+      if type(fn) == "function" then
+        local ei = vim.o.eventignore
+        vim.o.eventignore = "DiagnosticChanged"
+        local done = pcall(fn)
+        vim.o.eventignore = ei
+        if done then
+          return
+        end
       end
     end
     vim.cmd("bdelete!")

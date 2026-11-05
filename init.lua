@@ -5,6 +5,10 @@ vim.g.maplocalleader = " "
 require("config.options")
 require("config.lazy")
 
+-- Register workarounds before VeryLazy: the dashboard is created during
+-- VeryLazy, and its FileType event must see the autocmd below.
+require("config.workarounds").setup()
+
 -- These touch plugin APIs (Snacks global, gx, statuscolumn), so load them after
 -- plugins are set up. VeryLazy is the same point LazyVim used.
 vim.api.nvim_create_autocmd("User", {

@@ -3,6 +3,22 @@
 
 local GC = require("config.git-conflict")
 
+--- Upstream choose() indexes position.marks without a nil check and throws when
+--- the cursor is not on a parsed conflict. Guard here instead of patching source.
+local function choose(side)
+  return function()
+    local gc = require("git-conflict")
+    if gc.conflict_count(0) == 0 then
+      vim.notify("git-conflict: no conflict in this buffer", vim.log.levels.WARN)
+      return
+    end
+    local ok, err = pcall(gc.choose, side)
+    if not ok then
+      vim.notify("git-conflict: " .. tostring(err), vim.log.levels.ERROR)
+    end
+  end
+end
+
 return {
   {
     "akinsho/git-conflict.nvim",
@@ -27,10 +43,10 @@ return {
       },
       { "]x", function() GC.navigate("next") end, desc = "Next Conflict (Global)" },
       { "[x", function() GC.navigate("prev") end, desc = "Previous Conflict (Global)" },
-      { ".o", function() require("git-conflict").choose("ours") end,   desc = "Choose Ours" },
-      { ".t", function() require("git-conflict").choose("theirs") end, desc = "Choose Theirs" },
-      { ".b", function() require("git-conflict").choose("both") end,   desc = "Choose Both" },
-      { ".0", function() require("git-conflict").choose("none") end,   desc = "Choose None" },
+      { ".o", choose("ours"),   desc = "Choose Ours" },
+      { ".t", choose("theirs"), desc = "Choose Theirs" },
+      { ".b", choose("both"),   desc = "Choose Both" },
+      { ".0", choose("none"),   desc = "Choose None" },
     },
     opts = {
       list_opener = nil,

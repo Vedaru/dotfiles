@@ -28,7 +28,9 @@ return {
         },
       },
       dashboard = {
+        -- 这些行为以前是改 snacks 源码实现的；现在全部走配置。
         preset = {
+          keys = {}, -- 不显示快捷项（Find File / Recent 等）
           header = [[
 ██╗   ██╗███████╗██████╗  █████╗ ██████╗ ██╗   ██╗
 ██║   ██║██╔════╝██╔══██╗██╔══██╗██╔══██╗██║   ██║
@@ -37,6 +39,10 @@ return {
  ╚████╔╝ ███████╗██████╔╝██║  ██║██║  ██║╚██████╔╝
   ╚═══╝  ╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝
           ]],
+        },
+        sections = {
+          { section = "header" },
+          { section = "startup" },
         },
       },
       terminal = {
@@ -54,7 +60,7 @@ return {
       { "<leader>fg", function() Snacks.picker.grep({ cwd = S.project_root() }) end,     desc = "Live Grep" },
       { "<leader>fb", function() Snacks.picker.buffers() end,                            desc = "Find Buffers" },
       { "<leader>fr", function() Snacks.picker.recent() end,                             desc = "Recent Files" },
-      { "<leader>gd", function() Snacks.picker.git_diff({ cwd = S.project_root() }) end, desc = "Git Diff (hunks)" },
+      -- Git diffs live in codediff now (<leader>dv); no float picker here.
       {
         "<leader>gD",
         function()

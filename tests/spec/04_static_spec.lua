@@ -40,49 +40,81 @@ end
 t.eq(lazy_refs, {}, "no live LazyVim references")
 t.eq(ts_refs, {}, "no live treesitter references")
 
--- 3. Installer plugin list matches the lazy specs exactly.
+-- 3. plugins.lock matches the lazy specs exactly.
 local specs = {}
 for _, p in ipairs(require("lazy").plugins()) do
   specs[p.name] = true
 end
-local installed = {}
-local fh = io.open(root .. "/install-nvim.sh")
-t.ok(fh ~= nil, "installer readable")
-if fh then
-  for line in fh:lines() do
-    local name = line:match('^%s*%["([^"]+)"%]')
+local locked = {}
+local lf = io.open(root .. "/plugins.lock")
+t.ok(lf ~= nil, "plugins.lock readable")
+if lf then
+  for line in lf:lines() do
+    local name, url, ref, commit = line:match("^([^|#][^|]*)|([^|]*)|([^|]*)|([^|]*)$")
     if name then
-      installed[name] = true
+      locked[name] = { url = url, ref = ref, commit = commit }
     end
   end
-  fh:close()
+  lf:close()
 end
-local only_spec, only_installer = {}, {}
+local only_spec, only_lock, incomplete, unbounded = {}, {}, {}, {}
 for name in pairs(specs) do
-  if not installed[name] then
+  if not locked[name] then
     only_spec[#only_spec + 1] = name
   end
 end
-for name in pairs(installed) do
+for name, e in pairs(locked) do
   if not specs[name] then
-    only_installer[#only_installer + 1] = name
+    only_lock[#only_lock + 1] = name
+  end
+  if e.url == "" or e.commit == "" then
+    incomplete[#incomplete + 1] = name
+  end
+  if not e.commit:match("^%x+$") or #e.commit ~= 40 then
+    unbounded[#unbounded + 1] = name .. "=" .. e.commit
   end
 end
 table.sort(only_spec)
-table.sort(only_installer)
-t.eq(only_spec, {}, "every spec plugin is in the installer")
-t.eq(only_installer, {}, "every installer plugin has a spec")
+table.sort(only_lock)
+table.sort(incomplete)
+table.sort(unbounded)
+t.eq(only_spec, {}, "every spec plugin is pinned in plugins.lock")
+t.eq(only_lock, {}, "every pinned plugin has a spec")
+t.eq(incomplete, {}, "every pin has a url and commit")
+t.eq(unbounded, {}, "every pin is a full 40-char commit SHA")
 
 -- 4. Installer is valid bash.
 local out = vim.fn.system({ "bash", "-n", root .. "/install-nvim.sh" })
 t.eq(vim.v.shell_error, 0, "installer passes bash -n", out)
 
--- 5. No leftover references to removed patch helpers.
-if fh then
-  local installer = table.concat(vim.fn.readfile(root .. "/install-nvim.sh"), "\n")
-  t.missing(installer, "patch_lazyvim", "no LazyVim patch helpers left")
-  t.missing(installer, "patch_treesitter", "no treesitter patch helpers left")
-  t.missing(installer, "lazyvim.json", "lazyvim.json no longer installed")
+-- 5. No leftover patch helpers, and plugin sources are untouched upstream.
+local installer = table.concat(vim.fn.readfile(root .. "/install-nvim.sh"), "\n")
+t.missing(installer, "patch_snacks", "no snacks patch helper left")
+t.missing(installer, "patch_git_conflict", "no git-conflict patch helper left")
+t.missing(installer, "patch_lazyvim", "no LazyVim patch helpers left")
+t.missing(installer, "declare -A PLUGINS", "installer no longer keeps a second plugin list")
+t.missing(installer, "lazyvim.json", "lazyvim.json no longer installed")
+
+local function read(rel)
+  local f = io.open(vim.fn.stdpath("data") .. "/lazy/" .. rel)
+  return f and f:read("*a") or nil
+end
+local sc = read("snacks.nvim/lua/snacks/statuscolumn.lua")
+if sc then
+  t.contains(sc, '%T"', "snacks statuscolumn is unpatched (%T intact)")
+end
+local gcf = read("git-conflict.nvim/lua/git-conflict.lua")
+if gcf then
+  t.missing(gcf, "if position.marks then", "git-conflict is unpatched")
+end
+
+-- codediff ships a native engine; it must be vendored, not downloaded at runtime.
+local v = io.open(vim.fn.stdpath("data") .. "/lazy/codediff.nvim/VERSION")
+local codediff_version = v and v:read("*l") or nil
+if v then v:close() end
+if codediff_version then
+  local engine = vim.fn.stdpath("data") .. "/lazy/codediff.nvim/libvscode_diff_" .. codediff_version .. ".so"
+  t.eq(vim.fn.filereadable(engine), 1, "codediff engine vendored (" .. codediff_version .. ")")
 end
 
 -- 6. Removed plugin directories are gone from the spec surface.

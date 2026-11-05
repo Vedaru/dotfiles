@@ -1,0 +1,19 @@
+# name|url|ref|commit
+# Every plugin is pinned by immutable commit SHA. `ref` is only a human label
+# (tag or "-" for untagged); the installer fetches `commit`, never the tag, so
+# moved tags cannot change what gets installed.
+lazy.nvim|https://github.com/folke/lazy.nvim.git|v11.17.5|85c7ff3711b730b4030d03144f6db6375044ae82
+gruvbox.nvim|https://github.com/ellisonleao/gruvbox.nvim.git|2.0.0|61b0b3be2f0cfd521667403a0367298144d6c165
+snacks.nvim|https://github.com/folke/snacks.nvim.git|v2.31.0|e6fd58c82f2f3fcddd3fe81703d47d6d48fc7b9f
+oil.nvim|https://github.com/stevearc/oil.nvim.git|v2.16.0|17c0a8faaf48298a0c0cfb0d757c0eaee4ff7a32
+nvim-web-devicons|https://github.com/nvim-tree/nvim-web-devicons.git|v0.100|5b9067899ee6a2538891573500e8fd6ff008440f
+git-conflict.nvim|https://github.com/akinsho/git-conflict.nvim.git|v2.1.0|4bbfdd92d547d2862a75b4e80afaf30e73f7bbb4
+gitsigns.nvim|https://github.com/lewis6991/gitsigns.nvim.git|v2.1.0|a462f416e2ce4744531c6256252dee99a7d34a83
+grug-far.nvim|https://github.com/MagicDuck/grug-far.nvim.git|1.6.80|91b7e58b6ffc6ddad5acb7a7c1df21257724449e
+mini.icons|https://github.com/nvim-mini/mini.icons.git|v0.18.0|e56797f90192d81f1fda02e662fc3e8e3d775027
+mini.statusline|https://github.com/nvim-mini/mini.statusline.git|v0.18.0|b5547f44560dae3ccd81f914256fa6f705837022
+mini.surround|https://github.com/nvim-mini/mini.surround.git|v0.18.0|580e4cb98c5900d9fe743865fb5a5b2178b4ab18
+mini.pairs|https://github.com/nvim-mini/mini.pairs.git|v0.18.0|4a014143fcb4e9df26198ccb3ecff3b9e77a048c
+undotree|https://github.com/mbbill/undotree.git|rel_6.1|be23eacb2a63380bd79e207a738c728214ecc9d3
+leap.nvim|https://codeberg.org/andyg/leap.nvim|-|277e04fad21e3af05a55cc414757b09a704f2a92
+codediff.nvim|https://github.com/esmuellert/codediff.nvim.git|v4.0.6|09d9ebef2cc5a5c04db7a349cd6c61bdf84ecc8e

@@ -3,8 +3,6 @@ t.boot()
 
 -- Options that were silently lost when LazyVim was removed.
 t.eq(vim.o.timeout, false, "leader waits forever (timeout=false)")
-t.eq(vim.o.completeopt, "menu,menuone", "native completion opt")
-t.eq(vim.o.complete, ".,w,b,u,t", "native completion sources")
 t.eq(vim.o.number, true, "number on")
 t.eq(vim.o.relativenumber, true, "relativenumber on")
 t.eq(vim.o.termguicolors, true, "termguicolors on")
@@ -45,8 +43,9 @@ t.eq(polluted, false, "config/lua/plugins not on runtimepath")
 local maps = {
   { "n", "<C-h>" }, { "t", "<C-l>" },
   { "n", "<leader>bd" }, { "n", "<leader>bo" }, { "n", "<leader>bi" },
-  { "n", "<leader>ff" }, { "n", "<leader>fg" }, { "n", "<leader>gd" },
-  { "n", "<leader>sr" }, { "n", "<leader>uG" }, { "n", "]h" }, { "n", "[h" },
+  { "n", "<leader>ff" }, { "n", "<leader>fg" },
+  { "n", "<leader>sr" }, { "n", "<leader>uG" },
+  { "n", "<leader>dv" }, { "n", "<leader>dh" }, { "n", "<leader>dH" },
   { "n", "<leader>o" }, { "n", "<leader>gC" }, { "n", "]x" }, { "n", ".o" },
   { "n", "<leader>qs" }, { "n", "<leader>qS" }, { "n", "<leader>qw" },
   { "n", "<leader>U" }, { "n", "s" }, { "n", "gs" }, { "n", "gza" }, { "n", "gzn" },
@@ -54,6 +53,18 @@ local maps = {
 for _, m in ipairs(maps) do
   t.ok(t.map_exists(m[1], m[2]), ("map %s:%s registered"):format(m[1], m[2]))
 end
+
+-- ]h / [h come from gitsigns' on_attach, so they are buffer-local: verify them
+-- on a real git buffer instead of the global map table.
+vim.cmd("edit init.lua")
+vim.wait(1200)
+t.ok(t.map_exists("n", "]h"), "]h mapped by gitsigns on a git buffer")
+t.ok(t.map_exists("n", "[h"), "[h mapped by gitsigns on a git buffer")
+
+-- Diffs are handled by codediff now; the gitsigns split-diff maps are gone.
+t.ok(not t.map_exists("n", "<leader>ghd"), "no gitsigns split diff (<leader>ghd)")
+t.ok(not t.map_exists("n", "<leader>gd"), "no float git-diff picker (<leader>gd)")
+t.ok(t.map_exists("n", "<leader>dv"), "codediff keymap present")
 
 -- mini.pairs must not steal <CR> from completion: blink/cmp are gone, but the
 -- guard still matters for future completion plugins and for native completion.
@@ -67,6 +78,7 @@ end
 for _, g in ipairs({
   "user_bigfile", "user_real_tabs", "user_checktime", "user_highlight_yank",
   "user_resize_splits", "user_last_loc", "user_close_with_q", "user_auto_create_dir",
+  "user_workaround_dashboard_q",
 }) do
   t.ok(groups[g], "autocmd group " .. g)
 end

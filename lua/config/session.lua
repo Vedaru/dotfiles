@@ -183,6 +183,10 @@ function M.save(opts)
   local dir = opts.cwd or M.project_root()
   local file = M.file_for(dir)
 
+  -- mksession! will not create the target directory; on a fresh install
+  -- (~/.local/state/nvim/sessions missing) saving used to fail with E190.
+  vim.fn.mkdir(M.session_dir(), "p")
+
   -- Refuse to save if no file buffers are open.
   local has_file = false
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do

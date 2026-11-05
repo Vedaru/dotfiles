@@ -40,9 +40,10 @@ for spec in "${specs[@]}"; do
   echo
   echo "== $(basename "$spec")"
   state_dir="$(mktemp -d)"
-  # shellcheck disable=SC2086
-  output=$(XDG_STATE_HOME="$state_dir" "$NVIM" --headless \
-    -c "luafile $spec" 2>&1)
+  # pcall the spec so an unexpected error still exits with a failure code
+  # instead of leaving nvim hanging in headless mode.
+  output=$(XDG_STATE_HOME="$state_dir" timeout 120 "$NVIM" --headless \
+    -c "lua local ok, err = pcall(dofile, '$spec'); if not ok then io.write('SPEC ERROR: ' .. tostring(err) .. '\n'); vim.cmd('cquit 1') end" 2>&1)
   status=$?
   rm -rf "$state_dir"
   echo "$output"

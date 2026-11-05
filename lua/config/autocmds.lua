@@ -51,16 +51,9 @@ vim.api.nvim_create_autocmd("SessionLoadPost", {
   end,
 })
 
-
--- snacks_dashboard 光标吸附修复已下沉到 snacks 源码
--- (lua/snacks/dashboard.lua 的 D:init WinEnter autocmd)：
--- 从 Lazy 等浮窗返回 dashboard 时直接 self:update() 重新吸附，
--- 比在 config 里绕 Snacks.dashboard.update() 事件链更稳。
--- build.sh 会把改过的 snacks.nvim 一起打包，重装不丢。
---
--- dashboard 的快捷选项删除 + q -> :qa 也都已下沉到 snacks 源码
--- (defaults.sections 去掉 keys 段、preset.keys 清空、D:init q 改 :qa)，
--- 这里不再需要任何 config 层 workaround。
+-- dashboard 的定制（banner、去掉快捷项、q -> :qa）现在全在配置里：
+-- sections/preset 在 plugins/snacks.lua，q 的重映射在 config/workarounds.lua。
+-- 不再修改 snacks 源码。
 
 -- snacks picker 预览切到真实 buffer 后 Alt-w 会丢，用 buffer-local 补回 cycle_win
 local function snacks_picker_preview_cycle_win(buf)

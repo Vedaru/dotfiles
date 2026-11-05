@@ -34,16 +34,9 @@ opt.ignorecase = true
 opt.smartcase = true -- 含大写时区分大小写
 opt.inccommand = "split" -- :s 实时预览替换效果
 
--- ── 补全菜单 ──────────────────────────────────────────────────────
--- 用 Neovim 内置补全（<C-n>/<C-p>），不装 nvim-cmp/blink。
--- 原因：nvim-cmp 在 0.12 上返回 0 个候选（已验证），blink.cmp v2 又需要
--- 额外安装 blink.lib + Rust 二进制，与"最小"目标不符。
--- noinsert/noselect 只为 nvim-cmp 服务，内置补全不需要；用经典 menu,menuone，
--- 这样 <C-n> 一下就会选中首项，<C-y> 直接接受。
-opt.completeopt = "menu,menuone"
--- 内置补全的数据源：当前缓冲、其他窗口、已加载/未加载缓冲、tag。
--- 文件路径补全用 <C-x><C-f>，行补全用 <C-x><C-l>。
-opt.complete = ".,w,b,u,t"
+-- 补全：不配置。
+-- nvim-cmp 在 0.12 上返回 0 个候选（已实测），内置补全又太弱，
+-- 所以不做任何设置，保留 Neovim 默认行为，不再维护这一块。
 
 -- ── 窗口分割 ──────────────────────────────────────────────────────
 opt.splitright = true
@@ -69,6 +62,9 @@ opt.confirm = true -- 退出未保存时提示而非报错
 opt.termguicolors = true
 -- 仅追加 eob，保留默认 fold 图标（避免覆盖造成字符数错误）
 opt.fillchars:append({ eob = " " }) -- 隐藏行尾的 ~
+-- 删除行的填充符：nvim 默认 diff 用 '-'，看起来像 ---- 的虚线。
+-- 用空格让被删区间变成干净的色块；想用 craftzdog 那种斜线效果就改成 "╱"。
+opt.fillchars:append({ diff = " " })
 opt.list = true
 opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 

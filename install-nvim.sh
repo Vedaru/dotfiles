@@ -31,26 +31,16 @@ NVIM_PREFIX="${NVIM_PREFIX:-/opt/nvim-linux-x86_64}"
 NVIM_BIN_LINK="${NVIM_BIN_LINK:-/usr/local/bin/nvim}"
 NVIM_ARCHIVE_URL="${NVIM_ARCHIVE_URL:-https://mirror.nju.edu.cn/github-release/neovim/neovim/LatestRelease/nvim-linux-x86_64.tar.gz}"
 
-# ── plugin list (name → URL) ──────────────────────────────────────
-declare -A PLUGINS=(
-  ["lazy.nvim"]="https://github.com/folke/lazy.nvim.git"
-  ["gruvbox.nvim"]="https://github.com/ellisonleao/gruvbox.nvim.git"
-  ["snacks.nvim"]="https://github.com/folke/snacks.nvim.git"
-  ["oil.nvim"]="https://github.com/stevearc/oil.nvim.git"
-  ["nvim-web-devicons"]="https://github.com/nvim-tree/nvim-web-devicons.git"
-  ["git-conflict.nvim"]="https://github.com/akinsho/git-conflict.nvim.git"
-  ["gitsigns.nvim"]="https://github.com/lewis6991/gitsigns.nvim.git"
-  ["grug-far.nvim"]="https://github.com/MagicDuck/grug-far.nvim.git"
-  ["mini.icons"]="https://github.com/nvim-mini/mini.icons.git"
-  ["mini.statusline"]="https://github.com/nvim-mini/mini.statusline.git"
-  ["mini.surround"]="https://github.com/nvim-mini/mini.surround.git"
-  ["mini.pairs"]="https://github.com/nvim-mini/mini.pairs.git"
-  ["undotree"]="https://github.com/mbbill/undotree.git"
-  ["leap.nvim"]="https://codeberg.org/andyg/leap.nvim"
-)
+# ── pinned plugins (name|url|ref|commit) ──────────────────────────
+LOCK_FILE="$SCRIPT_DIR/plugins.lock"
+
+# codediff ships a prebuilt diff engine. Fetch it from the pinned release and
+# verify the published checksum; the plugin itself does not verify it.
+CODEDIFF_VERSION="4.0.6"
+CODEDIFF_LIB_SHA256="ac2a1d416dc99f7d864c0362db4b5baa6633fa68ebc90c9c9f3b3a9ae9cce081"
 
 # ── config files to install ───────────────────────────────────────
-CONFIG_FILES=("init.lua" "lua")
+CONFIG_FILES=("init.lua" "plugins.lock" "lua")
 
 # ── banner ────────────────────────────────────────────────────────
 banner() {
@@ -62,12 +52,59 @@ EOF
 }
 
 # ── helpers ───────────────────────────────────────────────────────
-clone_one() {
-  local name="$1" url="$2" dest="$LAZY_DIR/$name"
+# Clone one plugin at its pinned commit. The lock file is the single source of
+# truth: adding a plugin means adding a line there, not editing this script.
+# Fetches the commit SHA directly (not the tag), so a moved tag cannot change
+# what gets installed.
+clone_pinned() {
+  local name="$1" url="$2" ref="$3" commit="$4" dest="$LAZY_DIR/$name"
   if [[ -d "$dest" ]]; then echo "  [skip] $name"; return 0; fi
-  echo "  [clone] $name ← $url"
-  GIT_TERMINAL_PROMPT=0 git clone --depth 1 --filter=blob:none "$url" "$dest" 2>&1 | sed 's/^/    /'
+  echo "  [clone] $name @ ${ref:--} (${commit:0:12})"
+  git init -q "$dest" 2>/dev/null
+  git -C "$dest" remote add origin "$url"
+  if ! GIT_TERMINAL_PROMPT=0 git -C "$dest" fetch -q --depth 1 origin "$commit"; then
+    echo "  [error] failed to fetch $name@$commit" >&2
+    rm -rf "$dest"
+    return 1
+  fi
+  git -C "$dest" checkout -q FETCH_HEAD
+  local actual
+  actual="$(git -C "$dest" rev-parse HEAD)"
+  if [[ "$actual" != "$commit" ]]; then
+    echo "  [error] $name checked out $actual, expected $commit" >&2
+    return 1
+  fi
   rm -rf "$dest/.git"
+}
+
+# Fetch and verify the codediff native engine (x86_64 Linux only).
+install_codediff_lib() {
+  local dir="$LAZY_DIR/codediff.nvim"
+  [[ -d "$dir" ]] || return 0
+  if [[ "$(uname -s)" != "Linux" || "$(uname -m)" != "x86_64" ]]; then
+    echo "  [skip] codediff engine (unsupported platform, plugin will download on first use)"
+    return 0
+  fi
+  local name="libvscode_diff_${CODEDIFF_VERSION}.so"
+  local dest="$dir/$name"
+  if [[ -f "$dest" ]]; then echo "  [skip] codediff engine"; return 0; fi
+
+  local url="https://github.com/esmuellert/codediff.nvim/releases/download/v${CODEDIFF_VERSION}/libvscode_diff_linux_x64_${CODEDIFF_VERSION}.so"
+  echo "  [fetch] codediff engine $CODEDIFF_VERSION"
+  if ! curl -fsSL -o "$dest.tmp" "$url"; then
+    rm -f "$dest.tmp"
+    echo "  [error] codediff engine download failed" >&2
+    return 1
+  fi
+  local actual
+  actual="$(sha256sum "$dest.tmp" | awk '{print $1}')"
+  if [[ "$actual" != "$CODEDIFF_LIB_SHA256" ]]; then
+    rm -f "$dest.tmp"
+    echo "  [error] codediff engine checksum mismatch" >&2
+    return 1
+  fi
+  mv "$dest.tmp" "$dest"
+  echo "  [ok] codediff engine verified"
 }
 
 # Install the prebuilt binary. Skips entirely when one is already in place, so
@@ -139,61 +176,6 @@ install_config() {
   done
 }
 
-patch_snacks() {
-  local sc="$LAZY_DIR/snacks.nvim/lua/snacks/statuscolumn.lua"
-  if [[ -f "$sc" ]] && grep -q '%T"' "$sc"; then
-    sed -i 's/%T"/%X"/' "$sc"
-    echo "  [patch] snacks statuscolumn %T → %X"
-  fi
-}
-
-patch_git_conflict() {
-  local f="$LAZY_DIR/git-conflict.nvim/lua/git-conflict.lua"
-  [[ -f "$f" ]] || return 0
-
-  # Already patched? (idempotent)
-  if grep -q 'if position.marks then' "$f"; then
-    echo "  [skip] git-conflict already patched"
-    return 0
-  fi
-
-  # Block 1: visual-mode choose path (8-space indent)
-  sed -i '
-    /^        api.nvim_buf_set_lines(0, pos_start, pos_end, false, lines)$/{
-      a\        if position.marks then
-      n
-      s/^/  /
-      n
-      s/^/  /
-      n
-      s/^/  /
-      n
-      s/^/  /
-      n
-      s/^/  /
-      a\        end
-    }' "$f"
-
-  # Block 2: normal-mode choose path (2-space indent)
-  sed -i '
-    /^  api.nvim_buf_set_lines(0, pos_start, pos_end, false, lines)$/{
-      a\  if position.marks then
-      n
-      s/^/  /
-      n
-      s/^/  /
-      n
-      s/^/  /
-      n
-      s/^/  /
-      n
-      s/^/  /
-      a\  end
-    }' "$f"
-
-  echo "  [patch] git-conflict nil-guard on position.marks"
-}
-
 # ── main ──────────────────────────────────────────────────────────
 main() {
   local mode="${1:-}"
@@ -213,12 +195,15 @@ main() {
   echo ""
   echo "── Plugins ──────────────────────────────────────────"
   mkdir -p "$LAZY_DIR"
-  for name in "${!PLUGINS[@]}"; do
-    clone_one "$name" "${PLUGINS[$name]}"
-  done
-
-  patch_snacks
-  patch_git_conflict
+  if [[ ! -f "$LOCK_FILE" ]]; then
+    echo "  [error] missing $LOCK_FILE" >&2
+    exit 1
+  fi
+  while IFS='|' read -r name url ref commit; do
+    [[ -z "$name" || "$name" == \#* ]] && continue
+    clone_pinned "$name" "$url" "$ref" "$commit"
+  done < "$LOCK_FILE"
+  install_codediff_lib
 
   echo ""
   echo "Done."

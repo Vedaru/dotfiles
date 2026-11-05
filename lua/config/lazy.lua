@@ -10,19 +10,14 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
   spec = {
-    -- Only the 3 LazyVim spec files we actually use (shadowed by lua/lazyvim/plugins/*)
-    { "LazyVim/LazyVim", import = "lazyvim.plugins.init" },
-    { "LazyVim/LazyVim", import = "lazyvim.plugins.ui" },
-    { "LazyVim/LazyVim", import = "lazyvim.plugins.editor" },
-
-    -- User plugin overrides
+    -- 全部插件规格都在 lua/plugins/ 下（不再依赖 LazyVim 的 spec 文件）
     { import = "plugins" },
   },
   defaults = {
     lazy = false,
     version = false,
   },
-  install = { missing = false, colorscheme = { "tokyonight", "habamax" } },
+  install = { missing = false, colorscheme = { "gruvbox", "habamax" } },
 
   -- ZERO NETWORK: never check for updates, never auto-install, never auto-update lazy itself
   checker = { enabled = false },

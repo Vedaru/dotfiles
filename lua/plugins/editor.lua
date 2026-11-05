@@ -4,7 +4,7 @@ return {
   {
     "MagicDuck/grug-far.nvim",
     opts = { headerMaxWidth = 80 },
-    cmd = { "GrugFar", "GrugFarWithin" },
+    cmd = { "GrugFar" },
     keys = {
       {
         "<leader>sr",
@@ -31,7 +31,6 @@ return {
   -- hunks in a commit.
   {
     "lewis6991/gitsigns.nvim",
-    event = "LazyFile",
     opts = {
       preview_config = {
         border = "rounded",

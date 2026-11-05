@@ -63,20 +63,26 @@ function M.build_conflict_list()
     handle:close()
   end
 
-  -- 2. fallback: scan tracked files for raw <<<<<<< markers
+  -- 2. fallback: look for raw <<<<<<< markers in files git reports as modified.
+  --    Scanning `git ls-files` (every tracked file, read from disk) was the real
+  --    cost. Only modified files can contain new conflict markers, and this still
+  --    covers cases with no MERGE_HEAD, e.g. `git stash pop` conflicts or a
+  --    manual paste. Unstaged and staged changes are both checked.
   if #conflict_files == 0 then
-    local h = io.popen("git ls-files 2>/dev/null")
-    if h then
-      for file in h:lines() do
-        if file ~= "" and not seen[file] then
-          local abs = vim.fn.fnamemodify(file, ":p")
-          if has_conflict_markers(abs) then
-            conflict_files[#conflict_files + 1] = file
+    for _, sub in ipairs({ { "diff", "--name-only" }, { "diff", "--cached", "--name-only" } }) do
+      local h = io.popen("git " .. table.concat(sub, " ") .. " 2>/dev/null")
+      if h then
+        for file in h:lines() do
+          if file ~= "" and not seen[file] then
             seen[file] = true
+            local abs = vim.fn.fnamemodify(file, ":p")
+            if has_conflict_markers(abs) then
+              conflict_files[#conflict_files + 1] = file
+            end
           end
         end
+        h:close()
       end
-      h:close()
     end
   end
 
@@ -156,20 +162,7 @@ end
 
 -- ── Refresh ──────────────────────────────────────────────────────────────────
 
-local function refresh_plugin_ui()
-  local ok, gc = pcall(require, "git-conflict")
-  if not ok then
-    return
-  end
-  -- Process each loaded buffer to re-highlight conflicts.
-  -- The plugin's processing is triggered by the decoration provider
-  -- during redraw; triggering a redraw here ensures buffers are refreshed.
-  vim.cmd("silent! GitConflictRefresh")
-  vim.cmd("redraw")
-end
-
 function M.refresh(force_open)
-  refresh_plugin_ui()
   local _, qf_items = M.build_conflict_list()
   M.update_qf(qf_items, force_open)
 end

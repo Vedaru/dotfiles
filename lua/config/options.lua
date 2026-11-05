@@ -1,4 +1,4 @@
--- ~/.config/nvim/lua/config/options.lua — 完全覆盖，不追 LazyVim 更新
+-- ~/.config/nvim/lua/config/options.lua — 本文件就是全部选项设置（独立配置，无发行版）
 
 local opt = vim.opt
 
@@ -12,13 +12,14 @@ opt.pumheight = 12 -- 补全菜单最多显示 12 行
 -- ── 编辑体验 ──────────────────────────────────────────────────────
 opt.scrolloff = 8 -- 光标上下保留 8 行可见
 opt.sidescrolloff = 8 -- 光标左右保留 8 列可见
-opt.cursorline = true -- 高亮当前行
-opt.wrap = false -- 默认不折行
-opt.linebreak = true -- 折行时按单词边界断行
+opt.wrap = true -- 超长行自动折行显示（原来 false 导致长行被截断，只能横向滚动）
+opt.linebreak = true -- 折行时按单词边界断行，不切断单词
+opt.breakindent = true -- 折行后的续行保持与首行相同的缩进
 opt.signcolumn = "yes" -- 始终显示左侧符号列，避免抖动
 opt.number = true -- 当前行显示绝对行号
 opt.relativenumber = true -- 其他行显示相对行号
-opt.statuscolumn = [[%!v:lua.LazyVim.statuscolumn()]]
+-- snacks 在 setup 时会写入同样的表达式；这里显式写出，去掉对 LazyVim 全局的依赖
+opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
 opt.virtualedit = "block" -- 块选择可超出行尾
 
 -- ── 缩进 ──────────────────────────────────────────────────────────
@@ -33,6 +34,17 @@ opt.ignorecase = true
 opt.smartcase = true -- 含大写时区分大小写
 opt.inccommand = "split" -- :s 实时预览替换效果
 
+-- ── 补全菜单 ──────────────────────────────────────────────────────
+-- 用 Neovim 内置补全（<C-n>/<C-p>），不装 nvim-cmp/blink。
+-- 原因：nvim-cmp 在 0.12 上返回 0 个候选（已验证），blink.cmp v2 又需要
+-- 额外安装 blink.lib + Rust 二进制，与"最小"目标不符。
+-- noinsert/noselect 只为 nvim-cmp 服务，内置补全不需要；用经典 menu,menuone，
+-- 这样 <C-n> 一下就会选中首项，<C-y> 直接接受。
+opt.completeopt = "menu,menuone"
+-- 内置补全的数据源：当前缓冲、其他窗口、已加载/未加载缓冲、tag。
+-- 文件路径补全用 <C-x><C-f>，行补全用 <C-x><C-l>。
+opt.complete = ".,w,b,u,t"
+
 -- ── 窗口分割 ──────────────────────────────────────────────────────
 opt.splitright = true
 opt.splitbelow = true
@@ -44,58 +56,33 @@ opt.undolevels = 10000
 opt.updatetime = 200 -- 更快的 CursorHold / 交换文件写入
 opt.swapfile = false -- 避免 session 恢复时 W325（多实例/残留 swapfile）；撤销由 undofile 负责
 
--- 按键序列超时设置：
--- 注意 timeoutlen 表示“等待组合键补全的最长毫秒数”，不是“无超时”的意思。
--- 之前误设为 0，导致按下 <leader>（Space）后 Vim 立即判定序列结束，
--- 来不及等待后续按键，从而直接 fallback 成 <Space> 的默认行为（光标右移）。
--- 这里改为 timeout = false：无限等待，直到组合键序列完整或按 <Esc> 取消。
+-- 按键序列超时：leader 必须无限等待。
+-- timeout = false 时 timeoutlen 被忽略，按下 <Space> 后不会因为停顿而中止，
+-- 这才是 leader 应有的手感（之前用 timeoutlen=300 会导致 <Space> 后稍微
+-- 停一下就退出序列，<leader>qS 之类的长按键根本按不出来）。
+-- 代价：无法完成的序列会一直挂着，需要 <Esc> 取消。这是刻意选择。
 opt.timeout = false
 
 opt.confirm = true -- 退出未保存时提示而非报错
 
 -- ── 外观细节 ──────────────────────────────────────────────────────
 opt.termguicolors = true
--- 仅追加 eob，保留 LazyVim 默认的 fold 图标（避免覆盖造成字符数错误）
+-- 仅追加 eob，保留默认 fold 图标（避免覆盖造成字符数错误）
 opt.fillchars:append({ eob = " " }) -- 隐藏行尾的 ~
 opt.list = true
 opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
 -- ── 剪贴板 ──────────────────────────────────────────────────────────
--- Use native Linux clipboard tools (Wayland: wl-copy, X11: xclip)
-vim.g.clipboard = {
-  name = "Linux-Clipboard",
-  copy = {
-    ["+"] = { "wl-copy", "--foreground", "--type", "text/plain" },
-    ["*"] = { "wl-copy", "--primary", "--foreground", "--type", "text/plain" },
-  },
-  paste = {
-    ["+"] = { "wl-paste", "--no-newline" },
-    ["*"] = { "wl-paste", "--primary", "--no-newline" },
-  },
-  cache_enabled = 1,
-}
-
-
+-- 不再手写 vim.g.clipboard：Neovim 自带 provider 会按环境自动选择
+-- wl-copy(wayland) → xclip/xsel(X11) → win32yank 等。
+-- 手写只指定 wl-copy 反而会在纯 X11 会话下直接失效。
 
 -- 默认 yank/delete/paste 使用系统剪贴板（"+ 寄存器）
 vim.o.clipboard = "unnamedplus"
 
--- ── gx / vim.ui.open：使用系统默认程序打开 URL/文件 ─────────────────
--- 按优先级尝试：wslview (WSL) > xdg-open (Linux) > open (macOS)
-vim.ui.open = function(uri)
-  local cmd
-  if vim.fn.executable("wslview") == 1 then
-    cmd = { "wslview", uri }
-  elseif vim.fn.executable("xdg-open") == 1 then
-    cmd = { "xdg-open", uri }
-  elseif vim.fn.executable("open") == 1 then
-    cmd = { "open", uri }
-  else
-    vim.notify("gx: no URL opener found (tried wslview, xdg-open, open)", vim.log.levels.ERROR)
-    return nil
-  end
-  return vim.system(cmd, { text = true })
-end
+-- ── gx / vim.ui.open ────────────────────────────────────────────────
+-- 不再覆盖 vim.ui.open：Neovim 0.10+ 内置实现已经会自动探测
+-- xdg-open > wslview > open(explorer.exe/lemonade) 等，并在失败时返回错误。
 
 -- ── Session ────────────────────────────────────────────────────────
 -- 不保存 terminal buffer（恢复时是死的）
@@ -109,6 +96,5 @@ vim.opt.sessionoptions:remove("localoptions")
 -- prevents "Session" from matching "session" (smartcase kicks in for uppercase)
 vim.opt.tagcase = "followscs"
 
--- ── ArkTS (.ets) filetype → TypeScript treesitter highlighting ─────
+-- ── ArkTS (.ets) filetype ──────────────────────────────────────────
 vim.filetype.add({ extension = { ets = "ets" } })
-vim.treesitter.language.register("typescript", "ets")

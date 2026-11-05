@@ -15,6 +15,9 @@ do
     { "v", "gra" }, { "x", "gra" },
     { "n", "<C-W>d" }, { "n", "<C-W><C-D>" },
     { "n", "[D" }, { "n", "]D" },
+    -- Core vim/_core/defaults.lua diagnostic jumps — exposed after removing
+    -- the user-level ]d/[d overrides; dormant without an LSP.
+    { "n", "]d" }, { "n", "[d" },
   }
   for _, spec in ipairs(builtins) do
     pcall(del, spec[1], spec[2])
@@ -53,12 +56,9 @@ map({ "n", "x" }, "<Down>", "v:count == 0 ? 'gj' : 'j'", { desc = "Down", expr =
 map({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr = true, silent = true })
 map({ "n", "x" }, "<Up>", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr = true, silent = true })
 
-map("n", "<A-j>", "<cmd>execute 'move .+' . v:count1<cr>==",                   { desc = "Move Down" })
-map("n", "<A-k>", "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==",             { desc = "Move Up" })
-map("i", "<A-j>", "<esc><cmd>m .+1<cr>==gi",                                   { desc = "Move Down" })
-map("i", "<A-k>", "<esc><cmd>m .-2<cr>==gi",                                   { desc = "Move Up" })
-map("v", "<A-j>", ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv",       { desc = "Move Down" })
-map("v", "<A-k>", ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv", { desc = "Move Up" })
+-- Move selected block with boundary clamping (avoids E16 at buffer edges)
+map("v", "J", ":<C-u>if line(\"'>\") < line('$') | '<,'>m '>+1 | endif<CR>gv=gv", { desc = "Move Down", silent = true })
+map("v", "K", ":<C-u>if line(\"'<\") > 1         | '<,'>m '<-2 | endif<CR>gv=gv", { desc = "Move Up",   silent = true })
 
 map("x", "<", "<gv")
 map("x", ">", ">gv")
@@ -77,20 +77,25 @@ map("n", "[b",          "<cmd>bprevious<cr>", { desc = "Prev Buffer" })
 map("n", "]b",          "<cmd>bnext<cr>",     { desc = "Next Buffer" })
 map("n", "<leader>bb",  "<cmd>e #<cr>",       { desc = "Switch to Other Buffer" })
 map("n", "<leader>`",   "<cmd>e #<cr>",       { desc = "Switch to Other Buffer" })
-map("n", "<leader>bD",  "<cmd>:bd<cr>",       { desc = "Delete Buffer and Window" })
+map("n", "<leader>bD",  "<cmd>bd<cr>",       { desc = "Delete Buffer and Window" })
 
--- Safe bufdelete: try Snacks, fall back to :bdelete!
-local function bufdelete(fn)
+-- Safe bufdelete: resolve Snacks at call time (this file loads before snacks.setup()).
+-- Falls back to :bdelete! if snacks is unavailable or the call fails.
+local function bufdel(name)
   return function()
-    local ok = pcall(fn)
-    if not ok then
-      vim.cmd("bdelete!")
+    local ok, snacks = pcall(require, "snacks")
+    if ok and snacks.bufdelete then
+      local fn = name and snacks.bufdelete[name] or snacks.bufdelete
+      if type(fn) == "function" and pcall(fn) then
+        return
+      end
     end
+    vim.cmd("bdelete!")
   end
 end
-map("n", "<leader>bd", bufdelete(Snacks.bufdelete),           { desc = "Delete Buffer" })
-map("n", "<leader>bo", bufdelete(Snacks.bufdelete.other),      { desc = "Delete Other Buffers" })
-map("n", "<leader>bi", bufdelete(Snacks.bufdelete.invisible),  { desc = "Delete Invisible Buffers" })
+map("n", "<leader>bd", bufdel(nil),         { desc = "Delete Buffer" })
+map("n", "<leader>bo", bufdel("other"),     { desc = "Delete Other Buffers" })
+map("n", "<leader>bi", bufdel("invisible"), { desc = "Delete Invisible Buffers" })
 
 -- ── Search ───────────────────────────────────────────────────────────────────
 
@@ -98,25 +103,6 @@ map({ "n", "x" }, "n", "'Nn'[v:searchforward].'zv'", { expr = true, desc = "Next
 map({ "n", "x" }, "N", "'nN'[v:searchforward].'zv'", { expr = true, desc = "Prev Search Result" })
 map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
   { desc = "Redraw / Clear hlsearch / Diff Update" })
-
--- ── Diagnostics (vim.diagnostic — no LSP required) ───────────────────────────
-
-local function diag_jump(next, severity)
-  return function()
-    vim.diagnostic.jump({
-      count = (next and 1 or -1) * vim.v.count1,
-      severity = severity and vim.diagnostic.severity[severity] or nil,
-      float = true,
-    })
-  end
-end
-map("n", "<leader>cd", vim.diagnostic.open_float,      { desc = "Line Diagnostics" })
-map("n", "]d", diag_jump(true),                         { desc = "Next Diagnostic" })
-map("n", "[d", diag_jump(false),                        { desc = "Prev Diagnostic" })
-map("n", "]e", diag_jump(true, "ERROR"),                { desc = "Next Error" })
-map("n", "[e", diag_jump(false, "ERROR"),               { desc = "Prev Error" })
-map("n", "]w", diag_jump(true, "WARN"),                 { desc = "Next Warning" })
-map("n", "[w", diag_jump(false, "WARN"),                { desc = "Prev Warning" })
 
 -- ── Misc ─────────────────────────────────────────────────────────────────────
 

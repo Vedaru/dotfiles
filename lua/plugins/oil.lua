@@ -104,11 +104,8 @@ return {
         end
       end
 
-      if not oil_open then
-        at_root = false
-      elseif not at_root then
-        at_root = true
-      end
+      -- 两态切换：文件所在目录 ⇄ 项目根目录（原来是"open 后永远停在 root"）
+      at_root = oil_open and not at_root
 
       local dir
       if at_root then
@@ -125,6 +122,6 @@ return {
         vim.cmd("close")
       end
       require("oil").open(dir)
-    end, { desc = "Oil (cycle: file dir → root → /)" })
+    end, { desc = "Oil (toggle: file dir ⇄ project root)" })
   end,
 }

@@ -5,8 +5,19 @@ local S = require("config.session")
 return {
   {
     "folke/snacks.nvim",
+    -- priority/lazy 原本由 LazyVim 的 base spec 提供，现在本文件自持
+    priority = 1000,
+    lazy = false,
     opts = {
       explorer = { enabled = false },
+      indent = { enabled = true },
+      input = { enabled = true },
+      notifier = { enabled = true },
+      scope = { enabled = true },
+      scroll = { enabled = true },
+      statuscolumn = { enabled = true },
+      toggle = { map = vim.keymap.set },
+      words = { enabled = true },
       picker = {
         hidden = true,
         ignored = true,
@@ -32,17 +43,12 @@ return {
         enabled = true,
         auto_insert = false,
         auto_close = false,
-        win = {
-          keys = {
-            nav_h = { "<C-h>", "<cmd>wincmd h<cr>", desc = "Go to Left Window", mode = "t", expr = true },
-            nav_j = { "<C-j>", "<cmd>wincmd j<cr>", desc = "Go to Lower Window", mode = "t", expr = true },
-            nav_k = { "<C-k>", "<cmd>wincmd k<cr>", desc = "Go to Upper Window", mode = "t", expr = true },
-            nav_l = { "<C-l>", "<cmd>wincmd l<cr>", desc = "Go to Right Window", mode = "t", expr = true },
-          },
-        },
+        -- <C-h/j/k/l> 已由 config/keymaps.lua 的全局 t-mode 映射处理，不在此重复定义。
       },
     },
     keys = {
+      { "<leader>n", function() Snacks.picker.notifications() end, desc = "Notification History" },
+      { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
       -- Picker: search
       { "<leader>ff", function() Snacks.picker.files({ cwd = S.project_root() }) end,    desc = "Find Files" },
       { "<leader>fg", function() Snacks.picker.grep({ cwd = S.project_root() }) end,     desc = "Live Grep" },

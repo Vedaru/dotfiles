@@ -3,7 +3,6 @@ return {
   {
     "leap.nvim",
     url = "https://codeberg.org/andyg/leap.nvim",
-    dir = vim.fn.stdpath("data") .. "/lazy/leap.nvim",
     opts = { labeled_modes = "nx" },
     -- Override default f/F/t/T so they don't shadow our s/S mappings.
     keys = function()

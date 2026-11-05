@@ -25,18 +25,9 @@ function M.decode(name)
   return path
 end
 
---- Session file path for a directory, optionally with git-branch suffix.
-function M.file_for(dir, opts)
-  opts = opts or {}
-  local name = M.encode(dir)
-  if opts.branch == true then
-    local out = vim.fn.systemlist({ "git", "-C", dir, "branch", "--show-current" })
-    local br = (out[1] or ""):gsub("%s+", "")
-    if br ~= "" and br ~= "main" and br ~= "master" and vim.v.shell_error == 0 then
-      name = name .. "%%" .. br:gsub("[/\\]+", "%%")
-    end
-  end
-  return M.session_dir() .. name .. ".vim"
+--- Session file path for a directory.
+function M.file_for(dir)
+  return M.session_dir() .. M.encode(dir) .. ".vim"
 end
 
 --- Git root of buffer > buffer dir > git root of cwd > cwd > $HOME.
@@ -155,13 +146,18 @@ function M.open_project_fallback(dir)
 end
 
 --- Reset line numbers / statuscolumn after session restore clobbers them.
+--- NOTE: do not probe with vim.fn.exists("*LazyVim.statuscolumn"). LazyVim is a Lua
+--- table, not a Vimscript function, so exists() is always 0 and the statuscolumn
+--- restore silently never ran. Ask snacks directly instead.
+local STATUSCOLUMN = "%!v:lua.require'snacks.statuscolumn'.get()"
+
 function M.reset_line_numbers()
   vim.schedule(function()
     vim.o.number = true
     vim.o.relativenumber = true
     vim.o.signcolumn = "yes"
-    if vim.fn.exists("*LazyVim.statuscolumn") == 1 then
-      vim.o.statuscolumn = [[%!v:lua.LazyVim.statuscolumn()]]
+    if pcall(require, "snacks.statuscolumn") then
+      vim.o.statuscolumn = STATUSCOLUMN
     end
     for _, win in ipairs(vim.api.nvim_list_wins()) do
       local buf = vim.api.nvim_win_get_buf(win)
@@ -170,20 +166,13 @@ function M.reset_line_numbers()
         vim.api.nvim_set_option_value("number", true, o)
         vim.api.nvim_set_option_value("relativenumber", true, o)
         vim.api.nvim_set_option_value("signcolumn", "yes", o)
-        if vim.fn.exists("*LazyVim.statuscolumn") == 1 then
-          vim.api.nvim_set_option_value("statuscolumn", [[%!v:lua.LazyVim.statuscolumn()]], o)
+        if pcall(require, "snacks.statuscolumn") then
+          vim.api.nvim_set_option_value("statuscolumn", STATUSCOLUMN, o)
         end
       end
     end
-    pcall(require, "snacks.statuscolumn")
     vim.cmd("redraw!")
   end)
-end
-
--- ── Event helpers ────────────────────────────────────────────────────────────
-
-local function fire(event)
-  vim.api.nvim_exec_autocmds("User", { pattern = "Session" .. event, modeline = false })
 end
 
 -- ── Core session operations ──────────────────────────────────────────────────
@@ -206,8 +195,6 @@ function M.save(opts)
     vim.notify("Session not saved: no file buffers open", vim.log.levels.WARN)
     return
   end
-
-  fire("SavePre")
 
   -- Clear every window's arglist (both the global one and any per-window
   -- local ones created via :arglocal). This workflow never relies on the
@@ -267,7 +254,6 @@ function M.save(opts)
     end
   end
 
-  fire("SavePost")
 end
 
 --- Restore layout after a session has been sourced.
@@ -382,9 +368,7 @@ function M.switch(file, opts)
   vim.cmd("silent! %bdelete!")
   vim.g.session_active_buffer = nil
 
-  fire("LoadPre")
   local ok, err = pcall(vim.cmd, "source " .. vim.fn.fnameescape(file))
-  fire("LoadPost")
 
   if not ok then
     vim.notify("Session source failed: " .. tostring(err), vim.log.levels.ERROR)
@@ -409,30 +393,84 @@ function M.load(opts)
   M.switch(file)
 end
 
---- Interactive session picker via vim.ui.select.
-function M.select()
-  local seen, items = {}, {}
-  for _, file in ipairs(M.list()) do
-    if vim.uv.fs_stat(file) then
-      local dir = M.decode(file)
-      if not seen[dir] then
-        seen[dir] = true
-        items[#items + 1] = {
-          file = file,
-          dir = dir,
-          display = vim.fn.fnamemodify(dir, ":~"):gsub("\\", "/"),
-        }
-      end
+-- ── Keymaps & startup behaviour ──────────────────────────────────────────────
+
+--- Open the session directory in Oil.
+--- Reuses an existing Oil window instead of stacking another one, and clears
+--- 'winfixbuf' (set by git blame and some picker previews), which otherwise
+--- aborts the switch with E1513 "Cannot switch buffer".
+function M.open_picker()
+  local dir = M.session_dir()
+  vim.fn.mkdir(dir, "p") -- never fail just because no session was saved yet
+
+  local oil = require("oil")
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].filetype == "oil" then
+      vim.api.nvim_set_current_win(win)
+      oil.open(dir)
+      return
     end
   end
-  vim.ui.select(items, {
-    prompt = "Select a session:",
-    format_item = function(item)
-      return item.display
-    end,
-  }, function(item)
-    if item then
-      M.switch(item.file)
+
+  if vim.wo.winfixbuf then
+    vim.wo.winfixbuf = false
+  end
+  oil.open(dir)
+end
+
+--- Register session keymaps and the startup restore. Called once from init.lua.
+--- Replaces the fake "session-manager" plugin spec, which put this config's
+--- lua/plugins directory on 'runtimepath' just to get lazy.nvim to host keymaps.
+function M.setup()
+  local map = vim.keymap.set
+  map("n", "<leader>qs", M.load, { desc = "Restore Session" })
+  map("n", "<leader>ql", function() M.load({ last = true }) end, { desc = "Restore Last Session" })
+  map("n", "<leader>qw", function()
+    M.save()
+    vim.notify("Session saved", vim.log.levels.INFO)
+  end, { desc = "Save Current Session" })
+  map("n", "<leader>qd", "<cmd>qa<cr>", { desc = "Quit Without Saving Session" })
+  map("n", "<leader>qS", M.open_picker, { desc = "Manage Sessions (Oil)" })
+
+  vim.schedule(function()
+    local args, root
+
+    if vim.fn.argc() == 0 then
+      root = M.project_root()
+    else
+      local first = vim.fn.argv(0)
+      if first == "" then return end
+      root = vim.fs.root(vim.fn.fnamemodify(first, ":p"), ".git")
+      if not root then return end
+      -- Capture absolute paths now; restoring a session changes cwd.
+      args = {}
+      for i = 0, vim.fn.argc() - 1 do
+        args[i + 1] = vim.fn.fnamemodify(vim.fn.argv(i), ":p")
+      end
+    end
+
+    local sess = M.file_for(root)
+    if vim.fn.filereadable(sess) ~= 1 then return end
+
+    if args then
+      M.switch(sess, { force = true })
+      -- Open the target file(s) without polluting the arglist (:drop does).
+      for _, path in ipairs(args) do
+        local bufnr = vim.fn.bufnr(path)
+        if bufnr > 0 and vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buflisted then
+          local wins = vim.fn.win_findbuf(bufnr)
+          if #wins > 0 then
+            vim.api.nvim_set_current_win(wins[1])
+          else
+            vim.cmd("buffer " .. bufnr)
+          end
+        else
+          vim.cmd("edit " .. vim.fn.fnameescape(path))
+        end
+      end
+    else
+      M.load()
     end
   end)
 end

@@ -1,9 +1,18 @@
--- mapleader must be set before lazy loads plugins
+-- mapleader must be set before anything loads
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
-vim.g.lazyvim_check_order = false
-vim.g.lazyvim_news = false
-
--- bootstrap lazy.nvim, LazyVim and your plugins
+require("config.options")
 require("config.lazy")
+
+-- These touch plugin APIs (Snacks global, gx, statuscolumn), so load them after
+-- plugins are set up. VeryLazy is the same point LazyVim used.
+vim.api.nvim_create_autocmd("User", {
+  pattern = "VeryLazy",
+  once = true,
+  callback = function()
+    require("config.autocmds")
+    require("config.keymaps")
+    require("config.session").setup()
+  end,
+})

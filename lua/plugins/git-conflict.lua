@@ -39,17 +39,6 @@ return {
     config = function(_, opts)
       require("git-conflict").setup(opts)
 
-      -- Safety net: guard nil position.marks in choose.
-      -- Root fix is in install-nvim.sh (patch_git_conflict).
-      local gc = require("git-conflict")
-      local _choose = gc.choose
-      gc.choose = function(side)
-        local ok, err = pcall(_choose, side)
-        if not ok then
-          vim.notify("git-conflict: " .. tostring(err), vim.log.levels.ERROR)
-        end
-      end
-
       vim.api.nvim_create_autocmd("User", {
         pattern = "GitConflictResolved",
         callback = function()
@@ -57,14 +46,10 @@ return {
         end,
       })
 
-      vim.api.nvim_create_autocmd("BufWritePost", {
-        group = vim.api.nvim_create_augroup("GitConflictRefresh", { clear = true }),
-        callback = function()
-          if vim.fn.finddir(".git", ".;") ~= "" then
-            pcall(GC.refresh, false)
-          end
-        end,
-      })
+      -- 不再在 BufWritePost 上刷新：写入不会改变"哪些文件仍未合并"（暂存才会）。
+      -- 旧实现每次保存都会跑一遍 GC.refresh，而无未合并文件时它 fallback 到
+      -- `git ls-files` + 逐文件读盘搜 <<<<<<<，在大仓库里是明显卡顿。
+      -- 现在的刷新时机：<leader>gC、]x/[x、GitConflictResolved。
 
       vim.api.nvim_create_autocmd("BufEnter", {
         group = vim.api.nvim_create_augroup("GitConflictSyncQf", { clear = true }),
